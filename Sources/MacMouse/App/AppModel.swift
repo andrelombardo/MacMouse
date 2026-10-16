@@ -15,6 +15,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var configuration: Configuration
     @Published private(set) var status: EngineStatus = .stopped
     @Published private(set) var learningID: Int?
+    @Published private(set) var detection = ButtonDetection()
     @Published private(set) var lastDiagnostic: MouseDiagnostic?
     @Published var message: String?
     @Published var diagnosticsVisible = false {
@@ -23,7 +24,6 @@ final class AppModel: ObservableObject {
             if !diagnosticsVisible { lastDiagnostic = nil }
         }
     }
-    private var learnTimeout: Timer?
     private var permissionTimer: Timer?
     private var suspended = false
 
@@ -32,8 +32,9 @@ final class AppModel: ObservableObject {
         configuration = loaded.configuration
         if loaded.recovered { message = "Le impostazioni non erano leggibili. Sono stati caricati i valori iniziali; rileva di nuovo i pulsanti." }
     }
-    var isActive: Bool { configuration.enabled && status == .running }
+    var isActive: Bool { configuration.enabled && status == .running && permissions.ready }
     var statusText: String {
+        if !permissions.ready { return permissions.title }
         if status == .running && configuration.bindings.allSatisfy({ $0.buttonNumber == nil }) { return "Rileva i pulsanti per iniziare" }
         return status.title
     }
@@ -42,10 +43,12 @@ final class AppModel: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.status = status
-                if [.unavailable, .suspended, .permissionRequired].contains(status) { self.cancelLearning() }
+                // A detection sheet can still capture local mouse events without a global tap.
             }
         }
-        engine.onLearn = { [weak self] number in Task { @MainActor [weak self] in self?.learned(number) } }
+        engine.onLearn = { [weak self] observation in
+            Task { @MainActor [weak self] in self?.observeButton(observation) }
+        }
         engine.onDiagnostic = { [weak self] event in
             Task { @MainActor [weak self] in
                 if self?.diagnosticsVisible == true { self?.lastDiagnostic = event }
@@ -53,7 +56,7 @@ final class AppModel: ObservableObject {
         }
         engine.onAction = { [weak self] action in
             Task { @MainActor [weak self] in
-                guard let self, self.configuration.enabled, !self.suspended else { return }
+                guard let self, self.configuration.enabled, !self.suspended, self.learningID == nil else { return }
                 self.executor.execute(action)
             }
         }
@@ -68,9 +71,12 @@ final class AppModel: ObservableObject {
         refresh()
     }
     func refresh(retry: Bool = false) {
+        let wasAuthorized = permissions.canFilterMouse
         permissions.refresh()
         login.refresh()
-        if !suspended { engine.configure(configuration, authorized: permissions.ready, retry: retry) }
+        if !permissions.canFilterMouse { executor.cancelPending() }
+        if !suspended { engine.configure(configuration, authorized: permissions.canFilterMouse, retry: retry) }
+        if permissions.canFilterMouse, !wasAuthorized, learningID != nil { engine.learn() }
     }
     func windowVisible(_ visible: Bool) {
         permissionTimer?.invalidate()
@@ -111,30 +117,30 @@ final class AppModel: ObservableObject {
         persist()
     }
     func beginLearning(id: Int) {
-        refresh(retry: true)
-        guard permissions.ready else { message = "Concedi Accessibilità prima di rilevare il pulsante."; return }
         cancelLearning()
+        executor.cancelPending()
+        refresh(retry: true)
+        detection = .init()
         learningID = id
-        engine.learn()
-        learnTimeout = Timer.scheduledTimer(withTimeInterval: 15, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard self?.learningID != nil else { return }
-                self?.cancelLearning()
-                self?.message = "Nessun pulsante ricevuto. Riprova premendo un pulsante laterale."
-            }
-        }
+        if permissions.canFilterMouse { engine.learn() }
     }
     func cancelLearning() {
         learningID = nil
-        learnTimeout?.invalidate()
-        learnTimeout = nil
+        detection = .init()
         engine.cancelLearning()
     }
-    private func learned(_ number: Int) {
-        guard let id = learningID else { return }
+    func observeButton(_ observation: ButtonObservation) {
+        guard learningID != nil else { return }
+        detection.observe(button: observation.button, phase: observation.phase)
+    }
+    func selectDetectedButton(_ number: Int) { detection.select(number) }
+    func clearDetection() { detection = .init() }
+    @discardableResult func confirmLearning() -> Bool {
+        guard let id = learningID else { return false }
+        guard detection.confirm(in: &configuration, bindingID: id) else { return false }
         cancelLearning()
-        if configuration.assign(button: number, to: id) { persist() }
-        else { message = "Il pulsante \(number) è già associato all’altra riga. Rimuovi prima quell’associazione." }
+        persist()
+        return true
     }
     func reset() {
         executor.cancelPending()

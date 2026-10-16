@@ -161,7 +161,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
                   let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
             view.cacheDisplay(in: view.bounds, to: bitmap)
             if let png = bitmap.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: path)) }
-            let report: [String: Any] = ["version": "0.1.0", "system": ProcessInfo.processInfo.operatingSystemVersionString,
+            let report: [String: Any] = ["version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+                "bundlePath": Bundle.main.bundleURL.path, "system": ProcessInfo.processInfo.operatingSystemVersionString,
                 "accessibility": model.permissions.accessibility, "posting": model.permissions.posting,
                 "engine": model.status.title, "windowVisible": window?.isVisible == true,
                 "mouseNames": model.devices.devices.map(\.name), "physicalHardwareTested": false]

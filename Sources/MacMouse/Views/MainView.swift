@@ -8,12 +8,23 @@ typealias ViewState<Value> = SwiftUI.State<Value>
 import MacMouseCore
 #endif
 
+private enum EditorSheet: Identifiable {
+    case shortcut(ShortcutRequest)
+    case detection(Int)
+    var id: String {
+        switch self {
+        case .shortcut(let request): "shortcut-\(request.id)"
+        case .detection(let id): "detection-\(id)"
+        }
+    }
+}
+
 struct MainView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var devices: DeviceService
     @ObservedObject var permissions: PermissionService
     @ObservedObject var login: LoginService
-    @ViewState private var shortcutRequest: ShortcutRequest?
+    @ViewState private var editor: EditorSheet?
     @ViewState private var confirmReset = false
 
     var body: some View {
@@ -43,16 +54,8 @@ struct MainView: View {
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.separator.opacity(0.45), lineWidth: 0.5))
 
-            if let id = model.learningID {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Premi il pulsante laterale \(id + 1)…").font(.callout)
-                    Spacer()
-                    Button("Annulla") { model.cancelLearning() }
-                }.padding(.top, 12).accessibilityElement(children: .contain)
-            } else {
-                Text("Rileva ciascun pulsante dal menu ••• prima di usarlo.")
-                    .font(.caption).foregroundStyle(.secondary).padding(.top, 10)
-            }
+            Text("Rileva ciascun pulsante e conferma l’associazione.")
+                .font(.caption).foregroundStyle(.secondary).padding(.top, 10)
 
             Divider().padding(.vertical, 20)
             VStack(alignment: .leading, spacing: 14) {
@@ -68,12 +71,13 @@ struct MainView: View {
 
             if !permissions.ready {
                 VStack(alignment: .leading, spacing: 9) {
-                    Label("Consenti Accessibilità", systemImage: "hand.raised").font(.callout.weight(.medium))
-                    Text("Serve a rimappare i pulsanti e inviare le tue scorciatoie. Abilita MacMouse in Impostazioni di Sistema, poi torna qui.")
+                    Label(permissions.title, systemImage: "hand.raised").font(.callout.weight(.medium))
+                    Text(permissions.explanation)
                         .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     HStack {
-                        Button("Apri Impostazioni") { permissions.request() }.buttonStyle(.glass)
+                        Button(permissions.accessibility ? "Consenti invio" : "Apri Impostazioni") { permissions.request() }.buttonStyle(.glass)
                         Button("Verifica") { model.refresh(retry: true) }
+                        Button("Mostra app") { permissions.revealApplication() }
                     }.controlSize(.small)
                 }.padding(.top, 20)
             } else if model.status == .unavailable || model.status == .suspended {
@@ -119,9 +123,14 @@ struct MainView: View {
         .padding(24)
         .frame(width: 460)
         .background(Color(nsColor: .windowBackgroundColor))
-        .sheet(item: $shortcutRequest) { request in
-            ShortcutSheet(request: request) { shortcut in
-                model.setAction(.init(request.kind, shortcut: shortcut), id: request.id)
+        .sheet(item: $editor, onDismiss: { model.cancelLearning() }) { sheet in
+            switch sheet {
+            case .shortcut(let request):
+                ShortcutSheet(request: request) { shortcut in
+                    model.setAction(.init(request.kind, shortcut: shortcut), id: request.id)
+                }
+            case .detection(let id):
+                ButtonDetectionSheet(bindingID: id, model: model, permissions: permissions)
             }
         }
         .alert("Ripristinare MacMouse?", isPresented: $confirmReset) {
@@ -147,8 +156,11 @@ struct MainView: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Pulsante laterale \(binding.id + 1)").font(.system(size: 13, weight: .medium))
-                Text(binding.buttonNumber.map { "Pulsante \($0)" } ?? "Da rilevare")
-                    .font(.caption).foregroundStyle(.secondary)
+                Button(binding.buttonNumber.map { "Pulsante \($0) · Rileva…" } ?? "Rileva pulsante…") {
+                    editor = .detection(binding.id)
+                }
+                .buttonStyle(.link).font(.caption)
+                .accessibilityLabel("Rileva pulsante laterale \(binding.id + 1)")
             }
             Spacer(minLength: 0)
             Menu {
@@ -162,12 +174,12 @@ struct MainView: View {
             }.controlSize(.small)
                 .accessibilityLabel("Azione del pulsante laterale \(binding.id + 1)")
             Menu {
-                Button("Rileva pulsante…") { model.beginLearning(id: binding.id) }
+                Button("Rileva pulsante…") { editor = .detection(binding.id) }
                 if binding.buttonNumber != nil { Button("Rimuovi associazione") { model.clearButton(id: binding.id) } }
                 if binding.action.kind.supportsShortcutOverride {
                     Divider()
                     Button("\(binding.action.shortcut == nil ? "Registra" : "Modifica") scorciatoia…") {
-                        shortcutRequest = .init(id: binding.id, kind: binding.action.kind, current: binding.action.shortcut)
+                        editor = .shortcut(.init(id: binding.id, kind: binding.action.kind, current: binding.action.shortcut))
                     }
                     if binding.action.shortcut != nil {
                         Button("Elimina scorciatoia") {
@@ -204,7 +216,7 @@ struct MainView: View {
     }
     private func select(_ kind: ActionKind, binding: ButtonBinding) {
         if kind == .shortcut || kind == .launchpad {
-            shortcutRequest = .init(id: binding.id, kind: kind, current: binding.action.kind == kind ? binding.action.shortcut : nil)
+            editor = .shortcut(.init(id: binding.id, kind: kind, current: binding.action.kind == kind ? binding.action.shortcut : nil))
         } else if kind == .openApplication {
             let panel = NSOpenPanel()
             panel.title = "Scegli un’applicazione"
@@ -229,7 +241,11 @@ struct MainView: View {
             }
             Text("Solo l’ultimo evento mouse, in memoria. Nessuna provenienza HID attribuita. Le azioni macOS richiedono scorciatoie di sistema abilitate; puoi personalizzarle dal menu del pulsante.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Text("MacMouse 0.1.0 · Beta · profilo globale").font(.caption2).foregroundStyle(.secondary)
+            Text("Controllo del dispositivo: \(permissions.accessibility ? "consentito" : "non riconosciuto") · Invio eventi: \(permissions.posting ? "consentito" : "non riconosciuto")")
+                .font(.caption).foregroundStyle(.secondary)
+            Text(Bundle.main.bundleURL.path).font(.caption2).foregroundStyle(.secondary)
+            Text("MacMouse \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") · Beta · profilo globale")
+                .font(.caption2).foregroundStyle(.secondary)
         }.textSelection(.enabled)
     }
 }

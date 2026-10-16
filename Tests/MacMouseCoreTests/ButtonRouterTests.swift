@@ -37,10 +37,10 @@ private func configured(_ first: ActionKind = .back, _ second: ActionKind = .for
     var router = configured()
     router.beginLearning()
     #expect(router.route(button: 17, phase: .down) == .init(.suppress, learnedButton: 17))
-    #expect(!router.learning)
+    #expect(router.learning)
     #expect(router.route(button: 17, phase: .up) == .init(.suppress))
-    #expect(router.route(button: 17, phase: .down) == .init(.pass))
-    router.beginLearning()
+    #expect(router.route(button: 17, phase: .down) == .init(.suppress, learnedButton: 17))
+    _ = router.route(button: 17, phase: .up)
     router.cancelLearning()
     #expect(router.route(button: 18, phase: .down) == .init(.pass))
 }

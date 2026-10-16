@@ -22,11 +22,16 @@ struct MouseDiagnostic: Sendable {
     let event: String
 }
 
+struct ButtonObservation: Sendable {
+    let button: Int
+    let phase: MousePhase
+}
+
 /// All tap and router state lives on a dedicated, sleeping CFRunLoop thread.
 /// The lock protects only publication of the loop. No lock is taken by the callback.
 final class MouseEngine: @unchecked Sendable {
     var onStatus: (@Sendable (EngineStatus) -> Void)?
-    var onLearn: (@Sendable (Int) -> Void)?
+    var onLearn: (@Sendable (ButtonObservation) -> Void)?
     var onDiagnostic: (@Sendable (MouseDiagnostic) -> Void)?
     var onAction: (@Sendable (ButtonAction) -> Void)?
 
@@ -68,7 +73,7 @@ final class MouseEngine: @unchecked Sendable {
 
     func configure(_ configuration: Configuration, authorized: Bool, retry: Bool = false) {
         perform { [self] in
-            if !configuration.enabled || !authorized { flush() }
+            if (!configuration.enabled && !router.learning) || !authorized { flush() }
             router.configuration = configuration
             guard authorized else {
                 removeTap()
@@ -177,7 +182,8 @@ final class MouseEngine: @unchecked Sendable {
             onDiagnostic?(.init(button: button, event: phase == .down ? "otherMouseDown" : "otherMouseUp"))
         }
         let result = router.route(button: button, phase: phase)
-        if let learned = result.learnedButton { onLearn?(learned) }
+        if let number = result.learnedButton { onLearn?(.init(button: number, phase: .down)) }
+        else if router.learning, (2...31).contains(button), phase == .up { onLearn?(.init(button: button, phase: .up)) }
         if let action = result.action { onAction?(action) }
         switch result.disposition {
         case .pass: return Unmanaged.passUnretained(event)

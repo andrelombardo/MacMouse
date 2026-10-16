@@ -8,7 +8,9 @@ MacMouse usa esclusivamente API pubbliche Apple. Il motore è implementato prima
 
 Un thread dedicato ospita un CFRunLoop in attesa. Configurazioni e comandi vi vengono inviati con `CFRunLoopPerformBlock`: la macchina a stati non è condivisa con SwiftUI. Il callback legge `mouseEventButtonNumber`, consulta `ButtonRouter` e restituisce, sopprime o converte l’evento. Le azioni applicative vengono accodate fuori dal callback. Nessuna operazione HID, accesso a disco o ricerca Accessibility avviene nel callback.
 
-`ButtonRouter` conserva soltanto le pressioni ancora aperte. La decisione presa al down resta valida per up e drag anche se nel frattempo cambiano le impostazioni. Down duplicati non ripetono azioni. I codici configurabili sono quelli aggiuntivi Quartz, da 2 a 31, e sono acquisiti esplicitamente; i numeri non sono codici HID. La modalità rilevamento consuma un intero click e termina al primo down valido, su annullamento o dopo 15 secondi.
+`ButtonRouter` conserva soltanto le pressioni ancora aperte. La decisione presa al down resta valida per up e drag anche se nel frattempo cambiano le impostazioni. Down duplicati non ripetono azioni. I codici configurabili sono quelli aggiuntivi Quartz, da 2 a 31, e sono acquisiti esplicitamente; i numeri non sono codici HID. La modalità rilevamento consuma interi click aggiuntivi e rimane attiva fino a Conferma o Annulla.
+
+`ButtonDetection` mantiene una selezione provvisoria e un insieme di numeri distinti, esclusivamente in memoria. Il pop-up mostra down/up, permette prove ripetute e impedisce di confermare un numero già assegnato all’altra riga. La configurazione viene modificata soltanto con Conferma. Un NSView dedicato riceve `otherMouseDown`/`otherMouseUp` dentro il riquadro anche senza permessi globali: non installa monitor di tastiera e non intercetta clic primari. Con Accessibilità autorizzata, l’event tap alimenta lo stesso modello anche fuori dal riquadro.
 
 Un’azione tastiera genera sempre una coppia keyDown/keyUp, preparata interamente prima dell’invio. I modificatori sono flag degli eventi con una sorgente privata, senza pressioni artificiali separate da lasciare aperte. Una pressione prolungata non produce autorepeat. Il clic centrale mantiene down, drag e up; può avere un solo proprietario alla volta. Le interruzioni generano un middle-up e consumano l’eventuale rilascio fisico successivo. Ogni evento generato o convertito porta un marcatore `eventSourceUserData`, escluso prima dell’instradamento.
 
@@ -37,6 +39,12 @@ Il processo principale è un accessorio AppKit con interfaccia interamente Swift
 `SMAppService.mainApp.status` è la fonte dello stato login. Il parametro pubblico dell’Apple Event di apertura distingue il login dall’apertura manuale: al login non viene creata la finestra. Il flag di test `--background` permette di provare un avvio silenzioso, senza sostituire la prova di un vero logout/login.
 
 SwiftUI e i colori semantici gestiscono aspetto, contrasto e accessibilità. Liquid Glass è limitato a controlli e indicatore; nessuna animazione personalizzata. L’alias `ViewState` seleziona il property wrapper pubblico `SwiftUI.State`, poiché i Command Line Tools 27 non includono il nuovo plugin della macro omonima.
+
+## Autorizzazioni e sostituzione del bundle
+
+`PermissionSnapshot` distingue controllo Accessibility e autorizzazione Core Graphics all’invio di eventi. Il filtro del mouse può partire con il primo; le scorciatoie richiedono entrambi. L’interfaccia mostra il consenso effettivamente mancante e la diagnostica espone i due valori insieme al percorso del bundle.
+
+Gli script costruiscono un bundle nuovo in una cartella temporanea e sostituiscono l’app completa solo dopo la verifica della firma. Non riscrivono l’eseguibile di un’app in esecuzione. `install-local.sh` usa un certificato locale disponibile per mantenere il designated requirement fra le compilazioni; una firma Apple Development resta distinta dalla distribuzione Developer ID. Nessun requisito di firma viene indebolito o sostituito con regole personalizzate. Le build pubbliche senza credenziali rimangono ad hoc e possono richiedere un nuovo consenso dopo l’aggiornamento.
 
 ## Documentazione Apple consultata
 

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum MousePhase: Sendable { case down, up, dragged }
+public enum MousePhase: Equatable, Sendable { case down, up, dragged }
 public enum EventDisposition: Equatable, Sendable { case pass, suppress, middle }
 public struct RoutingResult: Equatable, Sendable {
     public var disposition: EventDisposition
@@ -34,7 +34,6 @@ public struct ButtonRouter: Sendable {
             return .init(existing == .pass ? .pass : .suppress)
         }
         if learning {
-            learning = false
             pressed[button] = .suppress
             return .init(.suppress, learnedButton: button)
         }

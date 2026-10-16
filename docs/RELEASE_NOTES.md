@@ -1,14 +1,17 @@
-Prima beta pubblica di MacMouse, utility nativa macOS in italiano.
+MacMouse 0.1.1 beta 1 aggiorna il rilevamento dei pulsanti e la gestione delle autorizzazioni.
 
-- Due pulsanti aggiuntivi con rilevamento del codice Quartz effettivo.
-- Navigazione, scorciatoie personalizzate, azioni di sistema, apertura di app, clic centrale, comportamento originale e disattivazione.
-- Interfaccia SwiftUI con Liquid Glass nativo, menu bar e impostazioni locali.
-- Avvio al login mediante ServiceManagement; nessun helper o servizio di rete.
+- **Rileva pulsante** apre un pop-up con anteprima del numero, stato premuto/rilasciato, prove ripetute e pulsanti Conferma/Annulla. È accessibile direttamente sotto ogni riga.
+- Le associazioni vengono salvate solo dopo Conferma. I duplicati sono segnalati prima del salvataggio.
+- Il riquadro riceve i pulsanti locali anche senza Accessibilità, senza abilitare il controllo globale e senza acquisire tasti della tastiera.
+- Il consenso al controllo del dispositivo e quello all’invio delle scorciatoie sono mostrati separatamente. La diagnostica mostra i valori reali e il percorso della copia in uso.
+- Build e installazione sostituiscono un bundle completo verificato; lo script di installazione locale può usare un certificato già disponibile nel keychain per mantenere l’identità tra le compilazioni.
 
-**Requisiti:** macOS 27+, Apple Silicon. Archivio principale: `MacMouse-v0.1.0-macOS.zip`; disponibile anche DMG. Copiare MacMouse.app in Applicazioni prima di concedere Accessibilità. `SHA256SUMS.txt` permette di verificare gli archivi.
+**Requisiti:** macOS 27+, Apple Silicon. Scarica `MacMouse-v0.1.1-macOS.zip` oppure il DMG e verifica `SHA256SUMS.txt`.
 
-**Distribuzione:** firma ad hoc, senza Developer ID e senza notarizzazione. Gatekeeper può bloccare l’apertura: seguire la procedura di approvazione di macOS quando disponibile, oppure compilare localmente. Nessuno script disabilita le protezioni.
+**Firma della Release pubblica:** ad hoc, senza Developer ID e senza notarizzazione. La firma Apple Development eventualmente usata per l’installazione locale non è inclusa in questi archivi. Gatekeeper può richiedere la procedura di approvazione offerta da macOS; nessuna protezione viene disabilitata.
 
-**Verifiche:** build Release locale con SDK macOS 27.0 e Swift 6.4; 23 test automatici superati su instradamento down/up/drag, indipendenza dei binding, eventi sintetici, modificatori, recupero limitato del tap, recupero impostazioni e persistenza. Verificati avvio, menu azioni, registrazione e persistenza della scorciatoia, ripristino e interfaccia chiara/scura. Lo stato della compilazione Xcode remota è consultabile in Actions.
+**Consenso macOS:** una compilazione ad hoc può richiedere di riaggiungere l’app in Privacy e sicurezza → Controllo del dispositivo e accesso ai dati. Se macOS conserva ancora un’identità precedente, può essere necessario un riavvio del Mac. Il rilevamento locale nel pop-up non sostituisce il permesso necessario per rimappare globalmente.
 
-**Limiti della beta:** TECKNET TK-MS317 e rimappatura globale reale non ancora verificati fisicamente; Accessibilità non concessa nell’ambiente di test. Profilo globale, senza attribuzione degli eventi al singolo dispositivo. Navigazione dipendente dai menu dell’app e dal layout tastiera. Le azioni di sistema richiedono scorciatoie abilitate; Launchpad / Applicazioni richiede una combinazione registrata dall’utente. Logout/login reale, cambi TCC, sleep/wake fisico e uso prolungato richiedono la [procedura manuale](https://github.com/andrelombardo/MacMouse/blob/main/docs/MANUAL_TESTS.md).
+**Verifiche:** 30 test automatici su pressione/rilascio, selezione provvisoria e conferma, annullamento, duplicati, isolamento dei clic primari, eventi sintetici, stati delle autorizzazioni, persistenza e recupero del tap. La build Release Xcode e i pacchetti sono verificati dal workflow prima della pubblicazione.
+
+**Limiti:** profilo globale, senza attribuzione degli eventi al singolo mouse. Il supporto fisico completo al TECKNET TK-MS317 resta da verificare con la [procedura manuale](https://github.com/andrelombardo/MacMouse/blob/main/docs/MANUAL_TESTS.md). Navigazione dipendente dai menu dell’app e dal layout; le azioni di sistema richiedono scorciatoie abilitate. Logout/login reale, sleep/wake e uso prolungato richiedono ancora verifica manuale.
