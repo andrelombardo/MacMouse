@@ -1,4 +1,4 @@
-# Verifiche della beta 0.1.1
+# Verifiche della beta 0.1.2
 
 Ambiente locale del 16 ottobre 2026: macOS 27.0.1 (26A434), Apple Silicon arm64, Swift 6.4, SDK macOS 27.0, Command Line Tools. Xcode completo non installato localmente.
 
@@ -6,7 +6,8 @@ Ambiente locale del 16 ottobre 2026: macOS 27.0.1 (26A434), Apple Silicon arm64,
 | --- | --- |
 | Compilazione Release del package e creazione MacMouse.app | Superata |
 | Verifica codesign strict | Superata; Apple Development nell’installazione locale, ad hoc nella distribuzione pubblica |
-| 30 test automatici Swift Testing | Superati |
+| 31 test automatici Swift Testing | Superati |
+| Azioni Scrivania a sinistra/destra | Voci presenti nel menu della copia installata; configurazione senza registrazione, serializzazione e gestione delle pressioni verificate automaticamente. Passaggio fisico tra gli spazi da verificare manualmente |
 | Coppie di eventi Quartz down/up, flag modificatori, marcatore sintetico | Superata con eventi creati in memoria, senza invio globale |
 | Pressione/rilascio, trascinamento centrale, interruzione, down duplicati | Superata nella macchina a stati |
 | 10.000 cicli di pressione/rilascio | Superati nella macchina a stati |

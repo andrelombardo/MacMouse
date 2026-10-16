@@ -21,6 +21,21 @@ private func configured(_ first: ActionKind = .back, _ second: ActionKind = .for
     #expect(router.route(button: 7, phase: .up) == .init(.pass))
 }
 
+@Test func desktopActionsSurviveReloadAndWorkWithoutRecordedShortcuts() throws {
+    let configuration = configured(.desktopLeft, .desktopRight).configuration
+    let restored = try JSONDecoder().decode(Configuration.self, from: JSONEncoder().encode(configuration))
+    #expect(restored.isValid)
+    var router = ButtonRouter()
+    router.configuration = restored
+    for binding in restored.bindings {
+        let button = try #require(binding.buttonNumber)
+        #expect(binding.action.shortcut == nil)
+        #expect(router.route(button: button, phase: .down) == .init(.suppress, action: binding.action))
+        #expect(router.route(button: button, phase: .down) == .init(.suppress))
+        #expect(router.route(button: button, phase: .up) == .init(.suppress))
+    }
+}
+
 @Test func leftRightAndUnknownButtonsPassEvenWhileLearning() {
     var router = configured()
     router.beginLearning()

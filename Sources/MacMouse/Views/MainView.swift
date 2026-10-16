@@ -165,7 +165,7 @@ struct MainView: View {
             Spacer(minLength: 0)
             Menu {
                 actionGroup("Navigazione", kinds: [.back, .forward], binding: binding)
-                actionGroup("macOS", kinds: [.missionControl, .appExpose, .showDesktop, .switchApplication, .launchpad], binding: binding)
+                actionGroup("macOS", kinds: [.missionControl, .desktopLeft, .desktopRight, .appExpose, .showDesktop, .switchApplication, .launchpad], binding: binding)
                 actionGroup("Applicazioni", kinds: [.openApplication, .closeWindow, .hideApplication, .switchWindow], binding: binding)
                 actionGroup("Tastiera", kinds: [.shortcut], binding: binding)
                 actionGroup("Pulsante", kinds: [.original, .disabled, .middleClick], binding: binding)

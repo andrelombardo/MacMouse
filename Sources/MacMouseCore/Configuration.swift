@@ -23,7 +23,7 @@ public struct Shortcut: Codable, Equatable, Sendable {
 }
 
 public enum ActionKind: String, Codable, CaseIterable, Sendable {
-    case back, forward, missionControl, appExpose, showDesktop, switchApplication, launchpad
+    case back, forward, missionControl, desktopLeft, desktopRight, appExpose, showDesktop, switchApplication, launchpad
     case openApplication, closeWindow, hideApplication, switchWindow, shortcut, original, disabled, middleClick
 
     public var title: String {
@@ -31,6 +31,8 @@ public enum ActionKind: String, Codable, CaseIterable, Sendable {
         case .back: "Indietro"
         case .forward: "Avanti"
         case .missionControl: "Mission Control"
+        case .desktopLeft: "Scrivania a sinistra"
+        case .desktopRight: "Scrivania a destra"
         case .appExpose: "App Exposé"
         case .showDesktop: "Mostra scrivania"
         case .switchApplication: "Cambio applicazione"
@@ -46,7 +48,7 @@ public enum ActionKind: String, Codable, CaseIterable, Sendable {
         }
     }
     public var supportsShortcutOverride: Bool {
-        [.missionControl, .appExpose, .showDesktop, .switchApplication, .launchpad,
+        [.missionControl, .desktopLeft, .desktopRight, .appExpose, .showDesktop, .switchApplication, .launchpad,
          .closeWindow, .hideApplication, .switchWindow, .shortcut].contains(self)
     }
 }

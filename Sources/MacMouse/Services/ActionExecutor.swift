@@ -81,6 +81,8 @@ final class ActionExecutor {
     private func defaultShortcut(for kind: ActionKind) -> Shortcut? {
         switch kind {
         case .missionControl: .init(keyCode: 126, modifiers: 0x40000, keyLabel: "↑")
+        case .desktopLeft: .init(keyCode: UInt16(kVK_LeftArrow), modifiers: 0x40000, keyLabel: "←")
+        case .desktopRight: .init(keyCode: UInt16(kVK_RightArrow), modifiers: 0x40000, keyLabel: "→")
         case .appExpose: .init(keyCode: 125, modifiers: 0x40000, keyLabel: "↓")
         case .showDesktop: .init(keyCode: 103, modifiers: 0, keyLabel: "F11")
         case .switchApplication: .init(keyCode: 48, modifiers: 0x100000, keyLabel: "⇥")
