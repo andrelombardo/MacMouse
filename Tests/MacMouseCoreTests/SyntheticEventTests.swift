@@ -10,11 +10,24 @@ import Testing
         #expect(events.map(\.type) == [.keyDown, .keyUp])
         for event in events {
             #expect(event.getIntegerValueField(.keyboardEventKeycode) == keyCode)
-            #expect(event.flags.rawValue == 0x1E0000)
+            #expect(event.flags.rawValue & Shortcut.modifierMask == 0x1E0000)
             #expect(event.getIntegerValueField(.eventSourceUserData) == SyntheticEvents.marker)
             #expect(event.getIntegerValueField(.keyboardEventAutorepeat) == 0)
         }
     }
+}
+@Test func arrowShortcutsMatchNativeFunctionKeyTraits() {
+    for key: UInt16 in [123, 124, 125, 126] {
+        let shortcut = Shortcut(keyCode: key, modifiers: 0x40000, keyLabel: "Freccia")
+        let events = SyntheticEvents.keyboard(for: shortcut)
+        #expect(events.map(\.type) == [.keyDown, .keyUp])
+        // Matches the Control + function-key binding reported by HIToolbox.
+        #expect(events.allSatisfy { $0.flags == [.maskControl, .maskSecondaryFn] })
+        #expect(events.allSatisfy { !$0.flags.contains(.maskNumericPad) })
+    }
+    let plain = SyntheticEvents.keyboard(for: .init(keyCode: 0, modifiers: 0, keyLabel: "A"))
+    #expect(plain.map(\.type) == [.keyDown, .keyUp])
+    #expect(plain.allSatisfy { $0.flags.isEmpty })
 }
 @Test func invalidShortcutProducesNoPartialChord() {
     #expect(SyntheticEvents.keyboard(for: .init(keyCode: 55, modifiers: 0, keyLabel: "⌘")).isEmpty)

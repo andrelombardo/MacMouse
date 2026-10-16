@@ -34,9 +34,9 @@ Il dispositivo di riferimento è il **TECKNET TK-MS317**, via Bluetooth o ricevi
 
 ## Download
 
-[Scarica MacMouse 0.1.2 beta 1](https://github.com/andrelombardo/MacMouse/releases/tag/v0.1.2-beta.1).
+[Scarica MacMouse 0.1.3 beta 1](https://github.com/andrelombardo/MacMouse/releases/tag/v0.1.3-beta.1).
 
-Scegli `MacMouse-v0.1.2-macOS.zip` oppure `MacMouse-v0.1.2-macOS.dmg`. `SHA256SUMS.txt` contiene i checksum degli archivi. Le [Release](https://github.com/andrelombardo/MacMouse/releases) sono l’unico canale di aggiornamento; l’app non effettua richieste di rete.
+Scegli `MacMouse-v0.1.3-macOS.zip` oppure `MacMouse-v0.1.3-macOS.dmg`. `SHA256SUMS.txt` contiene i checksum degli archivi. Le [Release](https://github.com/andrelombardo/MacMouse/releases) sono l’unico canale di aggiornamento; l’app non effettua richieste di rete.
 
 ## Installazione
 
@@ -46,7 +46,7 @@ Scegli `MacMouse-v0.1.2-macOS.zip` oppure `MacMouse-v0.1.2-macOS.dmg`. `SHA256SU
 4. Premi **Rileva pulsante** sotto la prima riga. Nel pop-up porta il puntatore nel riquadro, prova il tasto laterale e premi **Conferma**. Puoi ripetere la prova o scegliere un numero già rilevato prima di salvare. Ripeti con la seconda riga.
 5. Scegli le azioni; puoi chiudere la finestra e riaprirla dall’icona del mouse nella barra dei menu.
 
-Per cambiare scrivania scegli direttamente **Scrivania a sinistra** e **Scrivania a destra** nella sezione macOS del menu azioni. Usano Control–← e Control–→ senza doverle registrare: macOS può intercettare queste combinazioni durante la registrazione. Le rispettive scorciatoie devono essere abilitate nelle impostazioni della tastiera.
+Per cambiare scrivania crea prima almeno due spazi in Mission Control, poi scegli **Scrivania a sinistra** e **Scrivania a destra** nella sezione macOS del menu azioni. Usano Control–← e Control–→ senza doverle registrare: macOS può intercettare queste combinazioni durante la registrazione. Le rispettive scorciatoie devono essere abilitate nelle impostazioni della tastiera. Con una sola scrivania, o al limite della sequenza di spazi, la relativa direzione non produce uno spostamento.
 
 La beta ha una **firma ad hoc**, senza **Developer ID** e senza **notarizzazione**. Gatekeeper può bloccarne l’apertura. Se ti fidi della provenienza, usa la procedura di approvazione offerta da macOS in **Impostazioni di Sistema → Privacy e sicurezza → Apri comunque**, quando disponibile. Su un Mac gestito questa scelta può essere vietata. Non occorre disabilitare Gatekeeper né rimuovere attributi di sicurezza. In alternativa compila il codice localmente. Vedi la [procedura Apple](https://support.apple.com/it-it/102445).
 

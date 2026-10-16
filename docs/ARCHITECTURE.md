@@ -12,7 +12,9 @@ Un thread dedicato ospita un CFRunLoop in attesa. Configurazioni e comandi vi ve
 
 `ButtonDetection` mantiene una selezione provvisoria e un insieme di numeri distinti, esclusivamente in memoria. Il pop-up mostra down/up, permette prove ripetute e impedisce di confermare un numero già assegnato all’altra riga. La configurazione viene modificata soltanto con Conferma. Un NSView dedicato riceve `otherMouseDown`/`otherMouseUp` dentro il riquadro anche senza permessi globali: non installa monitor di tastiera e non intercetta clic primari. Con Accessibilità autorizzata, l’event tap alimenta lo stesso modello anche fuori dal riquadro.
 
-Un’azione tastiera genera sempre una coppia keyDown/keyUp, preparata interamente prima dell’invio. I modificatori sono flag degli eventi con una sorgente privata, senza pressioni artificiali separate da lasciare aperte. Una pressione prolungata non produce autorepeat. Il clic centrale mantiene down, drag e up; può avere un solo proprietario alla volta. Le interruzioni generano un middle-up e consumano l’eventuale rilascio fisico successivo. Ogni evento generato o convertito porta un marcatore `eventSourceUserData`, escluso prima dell’instradamento.
+Un’azione tastiera prepara interamente una coppia keyDown/keyUp con la sorgente di sessione predefinita e la invia in `cgSessionEventTap`. I modificatori sono flag degli eventi: non vengono premuti o rilasciati artificialmente i tasti modificatori dell’utente. Gli eventi freccia includono il flag funzione implicito `maskSecondaryFn`, necessario per corrispondere alle scorciatoie di sistema, senza aggiungere `maskNumericPad`. Una coda seriale dedicata mantiene la pressione per 30 ms senza bloccare l’interfaccia. L’annullamento scarta le combinazioni ancora in coda e attende il completamento del rilascio in corso, anche prima di stop o uscita. Una pressione prolungata non produce autorepeat.
+
+Il clic centrale mantiene down, drag e up; può avere un solo proprietario alla volta. Le interruzioni generano un middle-up e consumano l’eventuale rilascio fisico successivo. Ogni evento generato o convertito porta un marcatore `eventSourceUserData`, escluso prima dell’instradamento. La diagnostica conserva esclusivamente l’ultimo evento mouse e l’ultima combinazione inviata mentre è visibile, senza scriverli su disco. Due comandi di prova eseguono le azioni configurate; un contatore temporaneo delle notifiche pubbliche `NSWorkspace.activeSpaceDidChangeNotification` consente di distinguerne l’invio dall’effettivo cambio spazio. Nessun identificatore di spazio o finestra viene acquisito o salvato.
 
 Su timeout il motore bilancia lo stato e riabilita il tap al massimo due volte nell’arco di un minuto; un terzo errore lo sospende. Un tap disabilitato per input utente viene sospeso senza riavvii automatici. Il comando Riprova, il ritorno nell’app o il wake consentono un nuovo tentativo. I permessi vengono ricontrollati all’attivazione, all’apertura del menu e al wake; l’unico timer periodico, ogni due secondi, esiste mentre la finestra visibile attende il permesso. Non esiste un timer in background. Revoche TCC possono richiedere il riavvio del processo da parte di macOS.
 
@@ -50,6 +52,9 @@ Gli script costruiscono un bundle nuovo in una cartella temporanea e sostituisco
 
 - [CGEvent.tapCreate](https://developer.apple.com/documentation/coregraphics/cgevent/tapcreate(tap:place:options:eventsofinterest:callback:userinfo:))
 - [CGEventType](https://developer.apple.com/documentation/coregraphics/cgeventtype)
+- [CGEventSourceStateID](https://developer.apple.com/documentation/coregraphics/cgeventsourcestateid)
+- [CGEventFlags](https://developer.apple.com/documentation/coregraphics/cgeventflags)
+- [CGEvent.post](https://developer.apple.com/documentation/coregraphics/cgevent/post(tap:))
 - [IOHIDManagerSetDeviceMatching](https://developer.apple.com/documentation/iokit/1438371-iohidmanagersetdevicematching)
 - [IOHIDManagerRegisterDeviceMatchingCallback](https://developer.apple.com/documentation/iokit/1438399-iohidmanagerregisterdevicematchi)
 - [SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice)

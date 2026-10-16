@@ -17,11 +17,13 @@ final class AppModel: ObservableObject {
     @Published private(set) var learningID: Int?
     @Published private(set) var detection = ButtonDetection()
     @Published private(set) var lastDiagnostic: MouseDiagnostic?
+    @Published private(set) var lastShortcut: Shortcut?
+    @Published private(set) var spaceChanges = 0
     @Published var message: String?
     @Published var diagnosticsVisible = false {
         didSet {
             engine.setDiagnostics(diagnosticsVisible)
-            if !diagnosticsVisible { lastDiagnostic = nil }
+            if !diagnosticsVisible { lastDiagnostic = nil; lastShortcut = nil; spaceChanges = 0 }
         }
     }
     private var permissionTimer: Timer?
@@ -61,6 +63,9 @@ final class AppModel: ObservableObject {
             }
         }
         executor.onError = { [weak self] text in self?.message = text }
+        executor.onShortcut = { [weak self] shortcut in
+            if self?.diagnosticsVisible == true { self?.lastShortcut = shortcut }
+        }
         devices.onDisconnect = { [weak self] in
             self?.executor.cancelPending()
             self?.engine.interrupt()
@@ -135,6 +140,12 @@ final class AppModel: ObservableObject {
     }
     func selectDetectedButton(_ number: Int) { detection.select(number) }
     func clearDetection() { detection = .init() }
+    func testAction(id: Int) {
+        guard diagnosticsVisible, !suspended, learningID == nil,
+              let binding = configuration.bindings.first(where: { $0.id == id }) else { return }
+        executor.execute(binding.action)
+    }
+    func spaceDidChange() { if diagnosticsVisible { spaceChanges += 1 } }
     @discardableResult func confirmLearning() -> Bool {
         guard let id = learningID else { return false }
         guard detection.confirm(in: &configuration, bindingID: id) else { return false }

@@ -30,10 +30,16 @@ enum KeyboardLayout {
 @MainActor
 final class ActionExecutor {
     var onError: ((String) -> Void)?
+    var onShortcut: ((Shortcut) -> Void)?
     private let navigationQueue = DispatchQueue(label: "MacMouse.Navigation", qos: .userInteractive)
-    private let cancellation = NavigationCancellation()
+    private let keyboardQueue = DispatchQueue(label: "MacMouse.Keyboard", qos: .userInteractive)
+    private let cancellation = ActionCancellation()
 
-    func cancelPending() { cancellation.cancel() }
+    func cancelPending() {
+        cancellation.cancel()
+        // Finish the current chord's releases; queued chords check the generation first.
+        keyboardQueue.sync {}
+    }
 
     func execute(_ action: ButtonAction) {
         guard AXIsProcessTrusted(), CGPreflightPostEventAccess() else {
@@ -58,7 +64,7 @@ final class ActionExecutor {
                     Task { @MainActor [weak self] in
                         guard cancellation.isCurrent(generation),
                               NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { return }
-                        if let fallback { Self.post(.init(keyCode: fallback, modifiers: 0x100000, keyLabel: character)) }
+                        if let fallback { self?.post(.init(keyCode: fallback, modifiers: 0x100000, keyLabel: character)) }
                         else { self?.onError?("Navigazione non disponibile in questa app o con questo layout. Usa una scorciatoia personalizzata.") }
                     }
                 }
@@ -73,7 +79,7 @@ final class ActionExecutor {
             }
         case .original, .disabled, .middleClick: break
         default:
-            if let shortcut = action.shortcut ?? defaultShortcut(for: action.kind) { Self.post(shortcut) }
+            if let shortcut = action.shortcut ?? defaultShortcut(for: action.kind) { post(shortcut) }
             else { onError?("Registra la scorciatoia di sistema per questa azione.") }
         }
     }
@@ -96,13 +102,27 @@ final class ActionExecutor {
         KeyboardLayout.keyCode(for: character).map { .init(keyCode: $0, modifiers: 0x100000, keyLabel: character.uppercased()) }
     }
 
-    static func post(_ shortcut: Shortcut) {
-        // A complete chord per physical press. Modifiers are event flags, never held keys.
-        for event in SyntheticEvents.keyboard(for: shortcut) { event.post(tap: .cgSessionEventTap) }
+    private func post(_ shortcut: Shortcut) {
+        let cancellation = cancellation
+        let generation = cancellation.current
+        keyboardQueue.async { [weak self] in
+            guard cancellation.isCurrent(generation) else { return }
+            let events = SyntheticEvents.keyboard(for: shortcut)
+            guard !events.isEmpty else {
+                Task { @MainActor [weak self] in self?.onError?("Impossibile preparare la scorciatoia.") }
+                return
+            }
+            // Keep each complete key press serial, off the UI and input threads.
+            for (index, event) in events.enumerated() {
+                event.post(tap: .cgSessionEventTap)
+                if index + 1 < events.count { Thread.sleep(forTimeInterval: 0.03) }
+            }
+            Task { @MainActor [weak self] in self?.onShortcut?(shortcut) }
+        }
     }
 }
 
-private final class NavigationCancellation: @unchecked Sendable {
+private final class ActionCancellation: @unchecked Sendable {
     private let lock = NSLock()
     private var generation: UInt64 = 0
     var current: UInt64 { lock.withLock { generation } }

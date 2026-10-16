@@ -54,7 +54,9 @@ struct MainView: View {
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.separator.opacity(0.45), lineWidth: 0.5))
 
-            Text("Rileva ciascun pulsante e conferma l’associazione.")
+            Text(model.configuration.bindings.contains { [.desktopLeft, .desktopRight].contains($0.action.kind) }
+                 ? "Per cambiare scrivania servono almeno due spazi in Mission Control."
+                 : "Rileva ciascun pulsante e conferma l’associazione.")
                 .font(.caption).foregroundStyle(.secondary).padding(.top, 10)
 
             Divider().padding(.vertical, 20)
@@ -236,6 +238,14 @@ struct MainView: View {
             Text("Diagnostica").font(.caption.weight(.semibold))
             Text(model.lastDiagnostic.map { "Pulsante \($0.button) · \($0.event)" } ?? "Premi un pulsante aggiuntivo del mouse.")
                 .font(.system(.caption, design: .monospaced))
+            if let shortcut = model.lastShortcut {
+                Text("Combinazione inviata: \(shortcut.display)").font(.system(.caption, design: .monospaced))
+            }
+            HStack {
+                Button("Prova pulsante 1") { model.testAction(id: 0) }
+                Button("Prova pulsante 2") { model.testAction(id: 1) }
+            }.controlSize(.small)
+            Text("Cambi scrivania osservati: \(model.spaceChanges)").font(.caption)
             ForEach(devices.devices) { device in
                 Text(String(format: "%@ · VID %04X · PID %04X", device.name, device.vendorID, device.productID)).font(.caption)
             }

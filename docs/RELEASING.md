@@ -1,20 +1,20 @@
 # Rilascio ripetibile
 
-1. Aggiorna `CFBundleShortVersionString` e `CFBundleVersion` in `Sources/MacMouse/Resources/Info.plist`. Aggiorna README, note e verifiche. La beta corrente ha versione bundle 0.1.2 e tag `v0.1.2-beta.1`.
+1. Aggiorna `CFBundleShortVersionString` e `CFBundleVersion` in `Sources/MacMouse/Resources/Info.plist`. Aggiorna README, note e verifiche. La beta corrente ha versione bundle 0.1.3 e tag `v0.1.3-beta.1`.
 2. Esegui `scripts/test.sh`, `scripts/build.sh` e `scripts/package.sh`. Verifica il bundle estratto dallo ZIP. Non firmare di nuovo un bundle dopo la notarizzazione senza ripetere il processo.
 3. Completa `MANUAL_TESTS.md` per le funzionalità dichiarate verificate. Conserva una prerelease finché il supporto hardware non è confermato. Una versione stabile richiede anche la variabile repository `HARDWARE_VERIFIED=true`, impostata soltanto dopo le prove fisiche.
-4. Aggiorna `docs/RELEASE_NOTES.md`, committa su main e verifica la pipeline. Crea e pubblica un tag coerente con la versione, per esempio `git tag v0.1.2-beta.1` e `git push origin v0.1.2-beta.1`.
+4. Aggiorna `docs/RELEASE_NOTES.md`, committa su main e verifica la pipeline. Crea e pubblica un tag coerente con la versione, per esempio `git tag v0.1.3-beta.1` e `git push origin v0.1.3-beta.1`.
 5. Il workflow ricompila, esegue i test, verifica il progetto Xcode, produce ZIP/DMG/checksum e crea la Release. I tag con suffisso sono prerelease. Solo il job di pubblicazione dispone di `contents: write`.
 6. Controlla la pagina Release, scarica gli asset e verifica `shasum -a 256 -c SHA256SUMS.txt` dalla stessa cartella. Non sostituire silenziosamente una versione già pubblicata: usa un nuovo tag/versione.
 
 Se occorre pubblicare gli archivi verificati localmente, dopo aver pubblicato il tag usa:
 
 ```sh
-gh release create v0.1.2-beta.1 \
-  dist/MacMouse-v0.1.2-macOS.zip \
-  dist/MacMouse-v0.1.2-macOS.dmg \
+gh release create v0.1.3-beta.1 \
+  dist/MacMouse-v0.1.3-macOS.zip \
+  dist/MacMouse-v0.1.3-macOS.dmg \
   dist/SHA256SUMS.txt \
-  --verify-tag --prerelease --title 'MacMouse 0.1.2 beta 1' \
+  --verify-tag --prerelease --title 'MacMouse 0.1.3 beta 1' \
   --notes-file docs/RELEASE_NOTES.md
 ```
 
