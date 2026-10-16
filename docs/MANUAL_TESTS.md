@@ -1,0 +1,21 @@
+# Verifica sul Mac con TECKNET TK-MS317
+
+Questa procedura è necessaria prima di dichiarare stabile il supporto hardware. I risultati non sono presunti dai test automatici.
+
+1. Installa MacMouse in Applicazioni. Esci da eventuali altre istanze. Concedi Accessibilità al bundle installato; se hai sostituito una build ad hoc, macOS può richiedere di rimuovere e aggiungere nuovamente la voce. Scegli Verifica. Lo stato deve diventare Pronto.
+2. Collega il TECKNET via Bluetooth. Controlla il nome rilevato: può essere generico. In Preferenze → Mostra diagnostica vengono mostrati VID/PID disponibili e solo l’ultimo evento aggiuntivo del mouse.
+3. Scegli Rileva pulsante sulla prima riga, premi e rilascia un tasto laterale. Annota il numero effettivo. Ripeti sull’altra riga con l’altro tasto. Non associare due righe allo stesso numero. Se non arriva un evento Quartz, il dispositivo non è rimappabile con questo meccanismo: conserva il risultato della diagnostica senza indovinare codici HID.
+4. Assegna Indietro e Avanti. Naviga fra pagine di Safari e cartelle del Finder; verifica entrambe le direzioni. Prova anche le app che usi abitualmente: menu, lingua e layout possono imporre una scorciatoia personalizzata.
+5. Registra una combinazione innocua con Command, Shift, Option e Control. Verifica una sola azione per click e nessuna ripetizione tenendo premuto il pulsante per cinque secondi. Prova un tasto funzione e una combinazione con frecce. Modifica ed elimina la scorciatoia.
+6. Prova Mantieni azione originale, Disabilita pulsante e Clic centrale, incluso il trascinamento in un’app che supporta il tasto centrale. Tieni premuto un pulsante e disattiva MacMouse: nessun tasto o clic virtuale deve restare premuto. Riattiva e verifica il click successivo.
+7. Verifica clic sinistro e destro, movimento e scorrimento del mouse, tap/click e gesti del trackpad integrato.
+8. Chiudi la finestra: le azioni devono continuare. Riaprila dall’icona nella barra dei menu; prova Attiva/disattiva ed Esci. Riavvia l’app e controlla la persistenza dei numeri e delle azioni.
+9. Scollega e ricollega il mouse, poi ripeti via ricevitore USB. I numeri possono cambiare fra trasporti: in tal caso rilevali nuovamente. La beta conserva un solo profilo globale, senza profili Bluetooth/USB separati.
+10. Prova due mouse contemporaneamente: lo stesso numero deve usare la stessa azione. L’app non promette di distinguere la provenienza degli eventi.
+11. Metti il Mac in stop e riattivalo. Prova anche blocco/sblocco sessione e disconnessione mentre è premuto un pulsante. Verifica che il motore riparta senza ripetizioni o pressioni bloccate.
+12. Disabilita Accessibilità in Impostazioni di Sistema. Torna in MacMouse: deve apparire lo stato di autorizzazione mancante e il comportamento originale deve rimanere utilizzabile. Riconcedi il permesso e, se macOS lo richiede, riavvia l’app. Nessuna modifica alle protezioni di sistema.
+13. Attiva Avvia al login, controlla la voce negli Elementi login, esegui un vero logout/login e verifica che compaia solo l’icona, senza finestra. Disattivalo e verifica l’assenza di avvio al login seguente.
+14. Prova chiaro, scuro, aumento del contrasto, riduzione della trasparenza, riduzione del movimento, navigazione da tastiera e VoiceOver. Controlla anche la finestra con la diagnostica aperta.
+15. Lascia l’app attiva per una giornata e controlla CPU e memoria con Monitoraggio Attività, sia a finestra chiusa sia dopo ripetute riconnessioni. Le prove automatiche non certificano consumo, assenza di leak o affidabilità giornaliera.
+
+Per ogni prova annota versione dell’app, versione macOS, trasporto, VID/PID disponibili, numeri dei pulsanti, esito e applicazione usata. Non raccogliere sequenze di tasti, contenuti di finestre o altre informazioni personali.

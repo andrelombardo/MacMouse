@@ -1,0 +1,111 @@
+name: Build e Release
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: MacMouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verifica toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-version
+          swift --version
+          test "$(uname -m)" = arm64
+      - name: Test automatici
+        run: scripts/test.sh
+      - name: Verifica progetto Xcode in Release
+        run: xcodebuild -project MacMouse.xcodeproj -scheme MacMouse -configuration Release -derivedDataPath build/Xcode CODE_SIGNING_ALLOWED=NO build
+      - name: Configura firma opzionale
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          CERTIFICATE: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+        run: |
+          if [[ -z "$CERTIFICATE" ]]; then
+            echo 'Firma ad hoc; Developer ID e notarizzazione non disponibili.'
+            exit 0
+          fi
+          test -n "$NOTARY_APPLE_ID" && test -n "$NOTARY_PASSWORD" && test -n "$NOTARY_TEAM_ID"
+          KEYCHAIN="$RUNNER_TEMP/MacMouse.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$KEYCHAIN_PASSWORD"
+          printf '%s' "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" "$HOME/Library/Keychains/login.keychain-db"
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | sed -n '/Developer ID Application/s/.*) \([A-F0-9]*\) .*/\1/p' | head -1)"
+          test -n "$IDENTITY"
+          echo "SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          xcrun notarytool store-credentials MacMouse-CI --apple-id "$NOTARY_APPLE_ID" --password "$NOTARY_PASSWORD" --team-id "$NOTARY_TEAM_ID" --keychain "$KEYCHAIN"
+          echo 'NOTARY_KEYCHAIN_PROFILE=MacMouse-CI' >> "$GITHUB_ENV"
+          rm "$RUNNER_TEMP/certificate.p12"
+      - name: Compila e verifica bundle
+        run: scripts/build.sh
+      - name: Verifica versione del tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' build/MacMouse.app/Contents/Info.plist)
+          case "$GITHUB_REF_NAME" in "v$VERSION"|"v$VERSION"-*) ;; *) echo 'Tag e versione non corrispondono'; exit 1 ;; esac
+      - name: Genera ZIP, DMG e checksum
+        run: scripts/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MacMouse-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Rimuovi keychain temporaneo
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/MacMouse.keychain-db" ]]; then security delete-keychain "$RUNNER_TEMP/MacMouse.keychain-db"; fi
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: MacMouse-${{ github.sha }}
+          path: dist
+      - name: Pubblica Release verificata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          HARDWARE_VERIFIED: ${{ vars.HARDWARE_VERIFIED }}
+        shell: bash
+        run: |
+          (cd dist && sha256sum --check SHA256SUMS.txt)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo 'Release già presente: gli asset pubblicati vengono conservati.'
+            exit 0
+          fi
+          FLAGS=()
+          if [[ "$TAG" == *-* ]]; then FLAGS+=(--prerelease); elif [[ "$HARDWARE_VERIFIED" != true ]]; then
+            echo 'Per una release stabile completa prima il protocollo hardware e imposta HARDWARE_VERIFIED=true.'
+            exit 1
+          fi
+          gh release create "$TAG" dist/* --verify-tag --title "MacMouse $TAG" --notes-file docs/RELEASE_NOTES.md "${FLAGS[@]}"
