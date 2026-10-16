@@ -42,10 +42,13 @@ final class ActionExecutor {
         }
         switch action.kind {
         case .back, .forward:
-            guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier else { return }
+            guard let application = NSWorkspace.shared.frontmostApplication else { return }
+            let pid = application.processIdentifier
             let backward = action.kind == .back
             let character = backward ? "[" : "]"
-            let fallback = KeyboardLayout.keyCode(for: character)
+            // Do not send a navigation shortcut into unrelated apps where it may edit text.
+            let knownNavigation = ["com.apple.Safari", "com.apple.finder"].contains(application.bundleIdentifier ?? "")
+            let fallback = knownNavigation ? KeyboardLayout.keyCode(for: character) : nil
             let cancellation = cancellation
             let generation = cancellation.current
             navigationQueue.async { [weak self] in
@@ -134,6 +137,26 @@ private enum NavigationMenu {
             }
             return false
         }
-        return visit(menuBar, depth: 0)
+        // Prioritize navigation menus rather than exhausting the budget on File/Edit.
+        var rootsValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(menuBar, kAXChildrenAttribute as CFString, &rootsValue) == .success,
+              let roots = rootsValue as? [AXUIElement] else { return false }
+        let preferred = ["cronologia", "history", "vai", "go", "naviga", "navigate", "vista", "view"]
+        var ranked: [(rank: Int, index: Int, element: AXUIElement)] = []
+        for (index, element) in roots.enumerated() {
+            var title: CFTypeRef?
+            AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &title)
+            let name = (title as? String ?? "").lowercased()
+            let rank = preferred.firstIndex(of: name) ?? preferred.count
+            ranked.append((rank, index, element))
+        }
+        ranked.sort { left, right in
+            if left.rank != right.rank { return left.rank < right.rank }
+            return left.index < right.index
+        }
+        for item in ranked {
+            if visit(item.element, depth: 1) { return true }
+        }
+        return false
     }
 }

@@ -4,7 +4,10 @@ A lightweight native macOS app for customizing your mouse.
 
 MacMouse associa i pulsanti aggiuntivi del mouse alle azioni che usi ogni giorno. Una finestra compatta in SwiftUI, controlli Liquid Glass e un menu nella barra di macOS. Gratuita, interamente offline, senza account, telemetria o dipendenze esterne.
 
-<img src="docs/images/macmouse-light.png" alt="Finestra reale di MacMouse in modalità chiara, in attesa del permesso Accessibilità" width="460">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/macmouse-dark.png">
+  <img src="docs/images/macmouse-light.png" alt="Finestra reale di MacMouse, in attesa del permesso Accessibilità" width="460">
+</picture>
 
 Screenshot reale della beta su macOS 27, prima della concessione di Accessibilità e del collegamento di un mouse.
 
@@ -21,7 +24,7 @@ Il profilo è **globale**: gli eventi Quartz non identificano in modo affidabile
 
 ## Compatibilità
 
-macOS **27 o successivo**, **Apple Silicon**. Build arm64 compilata su macOS 27.0.1 con Swift 6.4 e SDK macOS 27.0. Il progetto Xcode richiede Xcode 27; sul Mac di sviluppo sono presenti i Command Line Tools, senza Xcode completo. La verifica del progetto Xcode è prevista anche nella [pipeline](https://github.com/andrelombardo/MacMouse/actions).
+macOS **27 o successivo**, **Apple Silicon**. Build arm64 compilata su macOS 27.0.1 con Swift 6.4 e SDK macOS 27.0. Il progetto Xcode richiede Xcode 27; sul Mac di sviluppo sono presenti i Command Line Tools, senza Xcode completo. Il progetto Xcode è stato compilato con successo anche nella [pipeline](https://github.com/andrelombardo/MacMouse/actions).
 
 Il dispositivo di riferimento è il **TECKNET TK-MS317**, via Bluetooth o ricevitore USB. **La verifica fisica del dispositivo non è stata eseguita**: la prima versione è una beta. Non è distribuita una build Intel.
 
@@ -47,7 +50,7 @@ La beta ha una **firma ad hoc**, senza **Developer ID** e senza **notarizzazione
 
 Monitoraggio input non viene richiesto preventivamente. Se, dopo aver concesso Accessibilità, macOS rifiuta ancora l’event tap, compare il relativo comando opzionale. Il servizio HID enumera i dispositivi senza aprirli o leggere report di input. Nessun accesso a rete, microfono o registrazione dello schermo.
 
-Per Indietro/Avanti viene cercata un’azione di menu abilitata in italiano o inglese; in mancanza, viene tentata la scorciatoia Command–parentesi quadra se il layout la espone. Non tutte le applicazioni o i layout la supportano. Se necessario assegna una scorciatoia personalizzata. Le azioni Mission Control, App Exposé e Mostra scrivania usano rispettivamente Control–↑, Control–↓ e F11: devono essere abilitate nelle impostazioni della tastiera. Dal menu **•••** puoi modificarle. Cambio applicazione invia un singolo Command–Tab; Cambio finestra richiede una combinazione disponibile nel layout attivo o una registrazione personalizzata. Launchpad / Applicazioni richiede sempre la scorciatoia configurata dall’utente; non vengono usate API private.
+Per Indietro/Avanti viene cercata un’azione di menu abilitata in italiano o inglese, dando priorità ai menu di navigazione. In Safari e Finder, in mancanza del menu, viene tentata la scorciatoia Command–parentesi quadra se il layout la espone. Negli altri casi assegna una scorciatoia personalizzata: una combinazione di navigazione non viene inviata indiscriminatamente alle altre app. Le azioni Mission Control, App Exposé e Mostra scrivania usano rispettivamente Control–↑, Control–↓ e F11: devono essere abilitate nelle impostazioni della tastiera. Dal menu **•••** puoi modificarle. Cambio applicazione invia un singolo Command–Tab; Cambio finestra richiede una combinazione disponibile nel layout attivo o una registrazione personalizzata. Launchpad / Applicazioni richiede sempre la scorciatoia configurata dall’utente; non vengono usate API private.
 
 ## Compilazione dal sorgente
 

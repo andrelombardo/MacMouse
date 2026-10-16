@@ -24,6 +24,8 @@ L’ID di registro identifica soltanto la voce attualmente collegata nell’elen
 
 L’apertura di un’app usa NSWorkspace e il percorso scelto mediante NSOpenPanel. Non vengono eseguiti comandi di shell o AppleScript. Per Indietro/Avanti vengono visitati soltanto i menu del processo in primo piano con Accessibility, entro un budget di nodi/profondità/tempo; le richieste AX hanno un timeout breve. La ricerca è seriale fuori dal thread input. La scorciatoia di fallback viene inviata solo se il processo in primo piano non è cambiato. La traduzione delle lettere e dei simboli usa il layout tastiera attivo con `UCKeyTranslate`.
 
+I menu di navigazione (Vai/Cronologia e corrispondenti inglesi) vengono visitati per primi. Il fallback Command–parentesi è limitato a Safari e Finder, dove ha una funzione documentata di navigazione: nelle altre app non viene inviato automaticamente, perché potrebbe modificare testo. Disattivazione, stop e cambio configurazione annullano le ricerche di navigazione in coda.
+
 Le funzioni di sistema si basano su scorciatoie pubbliche configurabili. Non viene letto o modificato il database privato dei symbolic hotkey. L’assenza di una scorciatoia valida lascia passare il pulsante, invece di sopprimerlo senza azione.
 
 ## Stato e lifecycle
@@ -45,3 +47,5 @@ SwiftUI e i colori semantici gestiscono aspetto, contrasto e accessibilità. Liq
 - [SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice)
 - [Avvio come login item](https://developer.apple.com/documentation/coreservices/1556410-launch_apple_event_constants/keyaelaunchedasloginitem)
 - [Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass)
+- [Scorciatoie Safari](https://support.apple.com/en-gb/guide/safari/cpsh003/mac)
+- [Scorciatoie Finder](https://support.apple.com/en-my/102650)
