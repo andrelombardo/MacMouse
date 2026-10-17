@@ -1,51 +1,51 @@
 <p align="center">
-  <img src="Sources/MacMouse/Resources/AppIcon.svg" alt="Logo di MacMouse" width="96" />
+  <img src="Sources/MacMouse/Resources/AppIcon.svg" alt="MacMouse logo" width="96" />
 </p>
 
 <h1 align="center">MacMouse</h1>
 
-<p align="center">Personalizza i pulsanti e lo scorrimento del tuo mouse su Mac.</p>
+<p align="center">Customize your mouse buttons and scrolling on Mac.</p>
 
 <p align="center">
-  <a href="https://github.com/andrelombardo/MacMouse/releases/latest">Scarica MacMouse</a>
+  <a href="https://github.com/andrelombardo/MacMouse/releases/latest">Download MacMouse</a>
 </p>
 
-Assegna ai tasti laterali le azioni che usi ogni giorno e inverti la rotella senza cambiare lo scorrimento del trackpad. MacMouse usa i controlli nativi di macOS, conserva le impostazioni sul Mac e continua a funzionare quando chiudi la finestra.
+Assign everyday actions to your mouse’s side buttons and reverse the scroll wheel without changing trackpad scrolling. MacMouse uses native macOS controls, stores settings on your Mac, and keeps working when you close its window.
 
-L’icona compare nel Dock quando apri la finestra. Il pulsante rosso chiude la finestra e nasconde l’icona dal Dock, lasciando attive le azioni del mouse in background. Per terminare l’app usa **Esci da MacMouse**.
+The icon appears in the Dock when you open the window. The red close button closes the window and hides the Dock icon while keeping mouse actions active in the background. To quit the app, use its quit command.
 
-Gratuita e offline, senza account, pubblicità o telemetria. Richiede **macOS 27 o successivo** e un Mac con **Apple Silicon**.
+Free and offline, with no accounts, ads, or telemetry. Requires **macOS 27 or later** and a Mac with **Apple Silicon**.
 
-## Per iniziare
+## Getting started
 
-1. Scarica il **DMG** dalle [Release](https://github.com/andrelombardo/MacMouse/releases/latest) e aprilo.
-2. Trascina **MacMouse** nella cartella **Applicazioni** della finestra, poi apri l’app da Applicazioni.
-3. Premi **Apri le impostazioni**, consenti Accessibilità a MacMouse e torna nell’app.
+1. Download the **DMG** from [Releases](https://github.com/andrelombardo/MacMouse/releases/latest) and open it.
+2. Drag **MacMouse** into the **Applications** folder in the window, then open the app from Applications.
+3. Use the settings link to grant MacMouse Accessibility access, then return to the app.
 
-Per usare lo scorrimento naturale sul trackpad e quello tradizionale sul mouse, lascia **Scorrimento naturale** attivo nelle impostazioni di macOS e abilita **Inverti scorrimento del mouse** in MacMouse.
+To use natural scrolling on the trackpad and traditional scrolling on the mouse, leave **Natural scrolling** enabled in macOS settings and enable mouse scroll reversal in MacMouse.
 
-## Cosa puoi fare
+## Features
 
-- **Vedere il modello collegato:** sotto il nome compare il modello comunicato dal mouse, solo se disponibile e diverso dal nome. Si aggiorna automaticamente quando cambi dispositivo.
-- **Personalizzare due pulsanti:** Indietro, Avanti, Mission Control, cambio scrivania, apertura di app e scorciatoie.
-- **Gestire la rotella:** inversione verticale e orizzontale, mantenendo velocità e precisione.
-- **Usare il clic centrale:** anche con trascinamento, oppure conservare o disabilitare l’azione di un pulsante.
-- **Avviare al login:** tramite il servizio nativo di macOS.
-- **Nascondere l’icona:** dalla finestra dell’app. Quando è visibile, il menu contiene soltanto **Apri MacMouse** ed **Esci da MacMouse**. Puoi sempre riaprire l’app da Applicazioni.
+- **See the connected model:** the model reported by the mouse appears below its name, only when available and different from the name. It updates automatically when you switch devices.
+- **Customize two buttons:** Back, Forward, Mission Control, desktop switching, app launching, and shortcuts.
+- **Control scrolling:** reverse vertical and horizontal scrolling while preserving speed and precision.
+- **Use middle click:** including dragging, or keep or disable a button’s original action.
+- **Launch at login:** through the native macOS service.
+- **Hide the menu bar icon:** from the app window. When visible, its menu has just two commands: open MacMouse and quit MacMouse. You can always reopen the app from Applications.
 
-Le associazioni valgono per tutti i mouse che inviano lo stesso numero di pulsante. L’inversione riguarda le rotelle con eventi a scatti; trackpad, gesti e inerzia passano invariati. I mouse che inviano scorrimento continuo, come Magic Mouse o alcuni driver con scorrimento fluido, mantengono la direzione di sistema.
+Mappings apply to all mice that send the same button number. Reversal applies to discrete scroll wheel events; trackpad scrolling, gestures, and momentum pass through unchanged. Mice that send continuous scrolling, such as Magic Mouse or some drivers with smooth scrolling, keep the system scrolling direction.
 
-## Permessi e risorse
+## Permissions and resource usage
 
-Accessibilità consente la rimappatura e l’invio delle scorciatoie. MacMouse non registra la tastiera: una combinazione viene acquisita soltanto nel campo di registrazione. Il rilevamento locale di un pulsante funziona anche prima del consenso; le azioni nelle altre app richiedono l’autorizzazione.
+Accessibility access enables remapping and sending shortcuts. MacMouse does not log keystrokes: a shortcut is captured only in the shortcut recorder. Local button detection works before permission is granted; actions in other apps require authorization.
 
-Il motore attende gli eventi, senza polling o timer periodici. Lo scorrimento viene intercettato solo quando l’inversione è attiva. Chiudendo la finestra viene liberata la sua interfaccia. Gli oggetti temporanei del filtro vengono rilasciati dopo ogni evento.
+The engine waits for events, with no polling or periodic timers. Scrolling is intercepted only when reversal is enabled. Closing the window releases its interface. Temporary event filter objects are released after each event.
 
-Le build senza Developer ID e notarizzazione possono richiedere l’approvazione in **Impostazioni di Sistema → Privacy e sicurezza**, secondo la [procedura Apple](https://support.apple.com/it-it/102445). Un aggiornamento può richiedere di concedere di nuovo Accessibilità alla copia in Applicazioni.
+Builds without Developer ID signing and notarization may require approval in **System Settings → Privacy & Security**, following [Apple’s instructions](https://support.apple.com/en-us/102445). An update may require granting Accessibility access again to the copy in Applications.
 
-## Sviluppo
+## Development
 
-Apri `MacMouse.xcodeproj` con Xcode 27, oppure usa Swift 6.4 con SDK macOS 27:
+Open `MacMouse.xcodeproj` in Xcode 27, or use Swift 6.4 with the macOS 27 SDK:
 
 ```sh
 git clone https://github.com/andrelombardo/MacMouse.git
@@ -54,16 +54,16 @@ scripts/build.sh
 scripts/package.sh
 ```
 
-| Comando | Risultato |
+| Command | Result |
 | --- | --- |
-| `scripts/build.sh` | Crea `build/MacMouse.app`. |
-| `scripts/package.sh` | Crea DMG, ZIP e checksum in `dist/`. |
-| `scripts/install-local.sh` | Compila e installa in Applicazioni, conservando preferenze e un backup della copia precedente. |
+| `scripts/build.sh` | Builds `build/MacMouse.app`. |
+| `scripts/package.sh` | Creates the DMG, ZIP, and checksums in `dist/`. |
+| `scripts/install-local.sh` | Builds and installs in Applications, preserving preferences and a backup of the previous copy. |
 
-L’app non ha dipendenze esterne. Solo il packaging richiede Python 3.10+ e i tool fissati in `scripts/requirements-packaging.txt`, installati in un ambiente isolato. Se necessario, specifica il percorso dell’interprete con `PYTHON=/percorso/python3 scripts/package.sh`. La pipeline compila il progetto Xcode in Release e verifica bundle, archivi e checksum.
+The app has no external dependencies. Packaging requires Python 3.10+ and the tools pinned in `scripts/requirements-packaging.txt`, installed in an isolated environment. If needed, set the interpreter path with `PYTHON=/path/to/python3 scripts/package.sh`. The pipeline builds the Xcode project in Release configuration and verifies the bundle, archives, and checksums.
 
-Per pubblicare un aggiornamento, aumenta `CFBundleShortVersionString` e `CFBundleVersion` in `Sources/MacMouse/Resources/Info.plist`, aggiorna `docs/RELEASE_NOTES.md` e fai push su `main`: dopo le verifiche GitHub crea automaticamente il tag e la nuova Release con DMG, ZIP e checksum. Le versioni già pubblicate vengono conservate. È possibile avviare il rilascio anche pubblicando un tag `vX.Y.Z` corrispondente alla versione dell’app.
+To publish an update, increment `CFBundleShortVersionString` and `CFBundleVersion` in `Sources/MacMouse/Resources/Info.plist`, update `docs/RELEASE_NOTES.md` in English, and push to `main`. After verification, GitHub automatically creates the tag and a new release with the DMG, ZIP, and checksums. Existing releases are preserved. You can also trigger a release by pushing a `vX.Y.Z` tag matching the app version.
 
-## Licenza
+## License
 
-[MIT](LICENSE). Codice e icona originali; simboli di sistema forniti da macOS.
+[MIT](LICENSE). Original code and icon; system symbols provided by macOS.
