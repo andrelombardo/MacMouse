@@ -14,14 +14,13 @@ Assegna ai tasti laterali le azioni che usi ogni giorno e inverti la rotella sen
 
 L’icona compare nel Dock quando apri la finestra. Il pulsante rosso chiude la finestra e nasconde l’icona dal Dock, lasciando attive le azioni del mouse in background. Per terminare l’app usa **Esci da MacMouse**.
 
-Gratuita e offline, senza account, pubblicità o telemetria. Richiede **macOS 27 o successivo** e un Mac con **Apple Silicon**. La versione corrente del progetto è **1.0.0**.
+Gratuita e offline, senza account, pubblicità o telemetria. Richiede **macOS 27 o successivo** e un Mac con **Apple Silicon**.
 
 ## Per iniziare
 
 1. Scarica il **DMG** dalle [Release](https://github.com/andrelombardo/MacMouse/releases/latest) e aprilo.
 2. Trascina **MacMouse** nella cartella **Applicazioni** della finestra, poi apri l’app da Applicazioni.
 3. Premi **Apri le impostazioni**, consenti Accessibilità a MacMouse e torna nell’app.
-4. Apri i **tre puntini** della prima riga e scegli **Rileva pulsante…**, premi il tasto laterale e conferma. Ripeti per il secondo tasto e scegli le azioni.
 
 Per usare lo scorrimento naturale sul trackpad e quello tradizionale sul mouse, lascia **Scorrimento naturale** attivo nelle impostazioni di macOS e abilita **Inverti scorrimento del mouse** in MacMouse.
 
@@ -35,8 +34,6 @@ Per usare lo scorrimento naturale sul trackpad e quello tradizionale sul mouse, 
 - **Nascondere l’icona:** dalla finestra dell’app. Quando è visibile, il menu contiene soltanto **Apri MacMouse** ed **Esci da MacMouse**. Puoi sempre riaprire l’app da Applicazioni.
 
 Le associazioni valgono per tutti i mouse che inviano lo stesso numero di pulsante. L’inversione riguarda le rotelle con eventi a scatti; trackpad, gesti e inerzia passano invariati. I mouse che inviano scorrimento continuo, come Magic Mouse o alcuni driver con scorrimento fluido, mantengono la direzione di sistema.
-
-Per cambiare scrivania occorrono almeno due spazi in Mission Control e le scorciatoie Control–← / Control–→ abilitate. Le altre azioni macOS usano le scorciatoie di sistema; puoi personalizzarle dalle opzioni del pulsante. Indietro e Avanti dipendono dai menu dell’app in primo piano e dal layout della tastiera.
 
 ## Permessi e risorse
 
