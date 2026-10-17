@@ -26,7 +26,7 @@ for points in [16, 32, 128, 256, 512] {
             color.setFill()
             NSBezierPath(roundedRect: NSRect(x: x, y: 1024-y-h, width: w, height: h), xRadius: radius, yRadius: radius).fill()
         }
-        rect(72, 72, 880, 880, 202, pale)
+        rect(72, 72, 880, 880, 202, .white)
         rect(328, 178, 368, 668, 184, ink)
         pale.setStroke()
         let seam = NSBezierPath()

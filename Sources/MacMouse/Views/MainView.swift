@@ -112,7 +112,7 @@ struct MainView: View {
         }
         .padding(24)
         .frame(width: 460)
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(Color(nsColor: .windowBackgroundColor))
         .sheet(item: $editor, onDismiss: { model.cancelLearning() }) { sheet in
             switch sheet {
             case .shortcut(let request):

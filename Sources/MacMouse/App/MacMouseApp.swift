@@ -81,7 +81,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             value.title = "MacMouse"
             value.styleMask = [.titled, .closable, .miniaturizable]
             value.titlebarAppearsTransparent = true
-            value.backgroundColor = .textBackgroundColor
             value.isReleasedWhenClosed = false
             value.delegate = self
             value.center()
