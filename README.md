@@ -12,6 +12,8 @@
 
 Assegna ai tasti laterali le azioni che usi ogni giorno e inverti la rotella senza cambiare lo scorrimento del trackpad. MacMouse usa i controlli nativi di macOS, conserva le impostazioni sul Mac e continua a funzionare quando chiudi la finestra.
 
+L’icona compare nel Dock quando apri la finestra. Il pulsante rosso chiude la finestra e nasconde l’icona dal Dock, lasciando attive le azioni del mouse in background. Per terminare l’app usa **Esci da MacMouse**.
+
 Gratuita e offline, senza account, pubblicità o telemetria. Richiede **macOS 27 o successivo** e un Mac con **Apple Silicon**. La versione corrente del progetto è **1.0.0**.
 
 ## Per iniziare

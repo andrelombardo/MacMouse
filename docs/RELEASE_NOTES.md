@@ -5,6 +5,7 @@ MacMouse 1.0.0 è la prima versione stabile del progetto.
 - Interfaccia semplificata con controlli nativi di macOS e un piccolo indicatore verde di attività.
 - Stato di Accessibilità e collegamento alle impostazioni in una sola riga.
 - Icona nella barra dei menu nascondibile; menu con soltanto Apri MacMouse ed Esci da MacMouse.
+- Icona nel Dock quando la finestra è aperta; chiudendola con il pulsante rosso, MacMouse continua a funzionare in background.
 - Diagnostica rimossa. Nessun polling o timer periodico; nessuna acquisizione dello scorrimento quando l’inversione è disattivata.
 - Le associazioni e l’avvio al login esistenti vengono conservati durante l’aggiornamento.
 

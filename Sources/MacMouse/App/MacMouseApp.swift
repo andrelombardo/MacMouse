@@ -9,6 +9,7 @@ enum MacMouseApp {
         let application = NSApplication.shared
         let delegate = AppDelegate()
         application.delegate = delegate
+        // Login launches stay in the background until the user opens the window.
         application.setActivationPolicy(.accessory)
         application.run()
         withExtendedLifetime(delegate) {}
@@ -72,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func showWindow() {
+        NSApp.setActivationPolicy(.regular)
         if window == nil {
             let root = MainView(model: model, devices: model.devices, permissions: model.permissions, login: model.login)
             let controller = NSHostingController(rootView: root)
@@ -85,6 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             value.setFrameAutosaveName("MacMouse.MainWindow")
             window = value
         }
+        if window?.isMiniaturized == true { window?.deminiaturize(nil) }
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate()
         model.windowVisible(true)
@@ -93,6 +96,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         model.windowVisible(false)
         window?.contentViewController = nil
         window = nil
+        // Closing the window hides the Dock icon; the input engine keeps running.
+        NSApp.setActivationPolicy(.accessory)
     }
     func windowDidMiniaturize(_ notification: Notification) { model.windowVisible(false) }
     func windowDidDeminiaturize(_ notification: Notification) { model.windowVisible(true) }
