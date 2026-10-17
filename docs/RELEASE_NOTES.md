@@ -3,6 +3,7 @@ MacMouse 1.0.0 è la prima versione stabile del progetto.
 - Installazione dal DMG con la classica finestra di trascinamento in Applicazioni.
 - Inversione della rotella del mouse senza modificare scorrimento, gesti o inerzia del trackpad.
 - Interfaccia semplificata con controlli nativi di macOS e un piccolo indicatore verde di attività.
+- Modello del mouse sotto il nome, letto automaticamente dal dispositivo collegato; indicazione “Modello non disponibile” quando il dispositivo non lo comunica.
 - Stato di Accessibilità e collegamento alle impostazioni in una sola riga.
 - Icona nella barra dei menu nascondibile; menu con soltanto Apri MacMouse ed Esci da MacMouse.
 - Icona nel Dock quando la finestra è aperta; chiudendola con il pulsante rosso, MacMouse continua a funzionare in background.

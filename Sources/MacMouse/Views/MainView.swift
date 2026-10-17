@@ -34,6 +34,7 @@ struct MainView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(deviceTitle).font(.headline).lineLimit(2)
                     Text(deviceSubtitle).font(.caption).foregroundStyle(.secondary)
+                        .lineLimit(2).help(deviceSubtitle)
                 }
                 Spacer(minLength: 8)
                 HStack(spacing: 5) {
@@ -128,8 +129,11 @@ struct MainView: View {
     }
     private var deviceSubtitle: String {
         if devices.devices.isEmpty { return "Nessun mouse esterno rilevato" }
-        if devices.devices.count == 1 { return "Collegato" }
-        return devices.devices.map(\.name).joined(separator: ", ")
+        if let device = devices.devices.first, devices.devices.count == 1 {
+            return device.model ?? "Modello non disponibile"
+        }
+        return devices.devices.map { "\($0.name): \($0.model ?? "Modello non disponibile")" }
+            .joined(separator: "\n")
     }
 
     private func settingRow(_ title: String, isOn: Binding<Bool>) -> some View {

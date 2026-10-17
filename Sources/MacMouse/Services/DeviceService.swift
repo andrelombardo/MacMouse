@@ -4,6 +4,7 @@ import IOKit.hid
 struct MouseDevice: Identifiable, Equatable, Sendable {
     let id: UInt64
     let name: String
+    let model: String?
 }
 
 @MainActor
@@ -57,7 +58,12 @@ final class DeviceService: ObservableObject {
         let name = property(kIOHIDProductKey) as? String ?? "Mouse esterno"
         let builtIn = (property("Built-In") as? NSNumber)?.boolValue ?? false
         guard !builtIn, !name.localizedCaseInsensitiveContains("trackpad") else { return }
-        let mouse = MouseDevice(id: identifier(device), name: name)
+        // Read the model from this device, independently of its user-visible name.
+        // Product/vendor IDs or the chip manufacturer do not identify a retail model.
+        let reportedModel = (property(kIOHIDModelNumberKey) as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(.controlCharacters))
+        let mouse = MouseDevice(id: identifier(device), name: name,
+                                model: reportedModel.flatMap { $0.isEmpty ? nil : $0 })
         devices.removeAll { $0.id == mouse.id }
         devices.append(mouse)
         devices.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
