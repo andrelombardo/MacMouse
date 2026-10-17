@@ -26,7 +26,7 @@ Per usare lo scorrimento naturale sul trackpad e quello tradizionale sul mouse, 
 
 ## Cosa puoi fare
 
-- **Vedere il modello collegato:** sotto il nome compare il modello comunicato dal mouse, aggiornato automaticamente quando cambi dispositivo. Se il mouse non fornisce il dato, compare “Modello non disponibile”.
+- **Vedere il modello collegato:** sotto il nome compare il modello comunicato dal mouse, solo se disponibile e diverso dal nome. Si aggiorna automaticamente quando cambi dispositivo.
 - **Personalizzare due pulsanti:** Indietro, Avanti, Mission Control, cambio scrivania, apertura di app e scorciatoie.
 - **Gestire la rotella:** inversione verticale e orizzontale, mantenendo velocità e precisione.
 - **Usare il clic centrale:** anche con trascinamento, oppure conservare o disabilitare l’azione di un pulsante.

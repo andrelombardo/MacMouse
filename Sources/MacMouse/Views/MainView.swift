@@ -33,8 +33,10 @@ struct MainView: View {
                     .frame(width: 38).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(deviceTitle).font(.headline).lineLimit(2)
-                    Text(deviceSubtitle).font(.caption).foregroundStyle(.secondary)
-                        .lineLimit(2).help(deviceSubtitle)
+                    if let deviceSubtitle {
+                        Text(deviceSubtitle).font(.caption).foregroundStyle(.secondary)
+                            .lineLimit(2).help(deviceSubtitle)
+                    }
                 }
                 Spacer(minLength: 8)
                 HStack(spacing: 5) {
@@ -127,13 +129,16 @@ struct MainView: View {
         if devices.devices.count > 1 { return "\(devices.devices.count) mouse collegati" }
         return devices.devices.first?.name ?? "Il tuo mouse"
     }
-    private var deviceSubtitle: String {
+    private var deviceSubtitle: String? {
         if devices.devices.isEmpty { return "Nessun mouse esterno rilevato" }
-        if let device = devices.devices.first, devices.devices.count == 1 {
-            return device.model ?? "Modello non disponibile"
+        let models = devices.devices.compactMap { device -> String? in
+            guard let model = device.model,
+                  model.localizedCaseInsensitiveCompare(device.name.trimmingCharacters(in: .whitespacesAndNewlines)) != .orderedSame else {
+                return nil
+            }
+            return devices.devices.count == 1 ? model : "\(device.name): \(model)"
         }
-        return devices.devices.map { "\($0.name): \($0.model ?? "Modello non disponibile")" }
-            .joined(separator: "\n")
+        return models.isEmpty ? nil : models.joined(separator: "\n")
     }
 
     private func settingRow(_ title: String, isOn: Binding<Bool>) -> some View {
