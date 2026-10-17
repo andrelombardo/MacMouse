@@ -60,7 +60,9 @@ scripts/package.sh
 | `scripts/package.sh` | Crea DMG, ZIP e checksum in `dist/`. |
 | `scripts/install-local.sh` | Compila e installa in Applicazioni, conservando preferenze e un backup della copia precedente. |
 
-L’app non ha dipendenze esterne. Solo il packaging richiede Python 3.10+ e i tool fissati in `scripts/requirements-packaging.txt`, installati in un ambiente isolato. Se necessario, specifica il percorso dell’interprete con `PYTHON=/percorso/python3 scripts/package.sh`. La pipeline compila il progetto Xcode in Release e verifica bundle, archivi e checksum; i tag `v1.0.0` e successivi pubblicano versioni stabili.
+L’app non ha dipendenze esterne. Solo il packaging richiede Python 3.10+ e i tool fissati in `scripts/requirements-packaging.txt`, installati in un ambiente isolato. Se necessario, specifica il percorso dell’interprete con `PYTHON=/percorso/python3 scripts/package.sh`. La pipeline compila il progetto Xcode in Release e verifica bundle, archivi e checksum.
+
+Per pubblicare un aggiornamento, aumenta `CFBundleShortVersionString` e `CFBundleVersion` in `Sources/MacMouse/Resources/Info.plist`, aggiorna `docs/RELEASE_NOTES.md` e fai push su `main`: dopo le verifiche GitHub crea automaticamente il tag e la nuova Release con DMG, ZIP e checksum. Le versioni già pubblicate vengono conservate. È possibile avviare il rilascio anche pubblicando un tag `vX.Y.Z` corrispondente alla versione dell’app.
 
 ## Licenza
 
