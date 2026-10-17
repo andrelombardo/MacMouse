@@ -17,11 +17,6 @@ enum EngineStatus: Equatable, Sendable {
     }
 }
 
-struct MouseDiagnostic: Sendable {
-    let button: Int
-    let event: String
-}
-
 struct ButtonObservation: Sendable {
     let button: Int
     let phase: MousePhase
@@ -32,7 +27,6 @@ struct ButtonObservation: Sendable {
 final class MouseEngine: @unchecked Sendable {
     var onStatus: (@Sendable (EngineStatus) -> Void)?
     var onLearn: (@Sendable (ButtonObservation) -> Void)?
-    var onDiagnostic: (@Sendable (MouseDiagnostic) -> Void)?
     var onAction: (@Sendable (ButtonAction) -> Void)?
 
     private let loopLock = NSLock()
@@ -41,7 +35,7 @@ final class MouseEngine: @unchecked Sendable {
     private var tap: CFMachPort?
     private var source: CFRunLoopSource?
     private var router = ButtonRouter()
-    private var diagnostics = false
+    private var includesScrollEvents = false
     private var recovery = TapRecoveryPolicy()
 
     func startThread() {
@@ -83,6 +77,7 @@ final class MouseEngine: @unchecked Sendable {
             if retry { recovery.reset() }
             guard configuration.enabled || router.learning else {
                 // Keep the filter alive to balance any outstanding consumed releases.
+                if includesScrollEvents { installTap() }
                 onStatus?(.stopped)
                 return
             }
@@ -98,7 +93,6 @@ final class MouseEngine: @unchecked Sendable {
         }
     }
     func cancelLearning() { perform { [self] in router.cancelLearning() } }
-    func setDiagnostics(_ value: Bool) { perform { [self] in diagnostics = value } }
     func interrupt() { perform { [self] in flush() } }
     func sleep() { perform { [self] in flush(); removeTap(); onStatus?(.suspended) } }
 
@@ -115,20 +109,24 @@ final class MouseEngine: @unchecked Sendable {
     }
 
     private func installTap() {
-        if let tap, CGEvent.tapIsEnabled(tap: tap) {
+        let needsScroll = router.configuration.enabled && router.configuration.reverseMouseScrolling
+        if let tap, CGEvent.tapIsEnabled(tap: tap), includesScrollEvents == needsScroll {
             onStatus?(router.configuration.enabled ? .running : .stopped)
             return
         }
         removeTap()
-        let mask = [CGEventType.otherMouseDown, .otherMouseUp, .otherMouseDragged]
+        var mask = [CGEventType.otherMouseDown, .otherMouseUp, .otherMouseDragged]
             .reduce(CGEventMask(0)) { $0 | (1 << $1.rawValue) }
+        if needsScroll { mask |= 1 << CGEventType.scrollWheel.rawValue }
         let context = Unmanaged.passUnretained(self).toOpaque()
         guard let newTap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,
                                             options: .defaultTap, eventsOfInterest: mask,
                                             callback: { _, type, event, context in
             guard let context else { return Unmanaged.passUnretained(event) }
             let engine = Unmanaged<MouseEngine>.fromOpaque(context).takeUnretainedValue()
-            return engine.receive(type: type, event: event)
+            // CFRunLoopRun on this worker has no AppKit per-event pool.
+            // Release temporary Cocoa objects after each callback, not at thread exit.
+            return autoreleasepool { engine.receive(type: type, event: event) }
         }, userInfo: context) else {
             router.cancelLearning()
             onStatus?(.unavailable)
@@ -141,6 +139,7 @@ final class MouseEngine: @unchecked Sendable {
             return
         }
         tap = newTap
+        includesScrollEvents = needsScroll
         source = newSource
         CFRunLoopAddSource(CFRunLoopGetCurrent(), newSource, .defaultMode)
         CGEvent.tapEnable(tap: newTap, enable: true)
@@ -152,6 +151,7 @@ final class MouseEngine: @unchecked Sendable {
         if let source { CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .defaultMode) }
         tap = nil
         source = nil
+        includesScrollEvents = false
     }
 
     private func receive(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
@@ -170,6 +170,10 @@ final class MouseEngine: @unchecked Sendable {
         guard event.getIntegerValueField(.eventSourceUserData) != SyntheticEvents.marker else {
             return Unmanaged.passUnretained(event)
         }
+        if type == .scrollWheel {
+            MouseScrolling.reverseWheel(event, enabled: router.configuration.enabled && router.configuration.reverseMouseScrolling)
+            return Unmanaged.passUnretained(event)
+        }
         let phase: MousePhase
         switch type {
         case .otherMouseDown: phase = .down
@@ -178,9 +182,6 @@ final class MouseEngine: @unchecked Sendable {
         default: return Unmanaged.passUnretained(event)
         }
         let button = Int(event.getIntegerValueField(.mouseEventButtonNumber))
-        if diagnostics, phase != .dragged {
-            onDiagnostic?(.init(button: button, event: phase == .down ? "otherMouseDown" : "otherMouseUp"))
-        }
         let result = router.route(button: button, phase: phase)
         if let number = result.learnedButton { onLearn?(.init(button: number, phase: .down)) }
         else if router.learning, (2...31).contains(button), phase == .up { onLearn?(.init(button: button, phase: .up)) }

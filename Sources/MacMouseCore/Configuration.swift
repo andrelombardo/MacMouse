@@ -85,9 +85,23 @@ public struct ButtonBinding: Codable, Equatable, Identifiable, Sendable {
 public struct Configuration: Codable, Equatable, Sendable {
     public var schemaVersion = 1
     public var enabled = true
+    public var reverseMouseScrolling = false
+    public var showMenuBarIcon = true
     public var bindings: [ButtonBinding]
     public init() {
         bindings = [.init(id: 0, action: .init(.back)), .init(id: 1, action: .init(.forward))]
+    }
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, enabled, reverseMouseScrolling, showMenuBarIcon, bindings
+    }
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try values.decode(Int.self, forKey: .schemaVersion)
+        enabled = try values.decode(Bool.self, forKey: .enabled)
+        bindings = try values.decode([ButtonBinding].self, forKey: .bindings)
+        // Preserve existing button assignments when upgrading from 0.1.x.
+        reverseMouseScrolling = try values.decodeIfPresent(Bool.self, forKey: .reverseMouseScrolling) ?? false
+        showMenuBarIcon = try values.decodeIfPresent(Bool.self, forKey: .showMenuBarIcon) ?? true
     }
     public var isValid: Bool {
         guard schemaVersion == 1, bindings.count == 2, bindings.map(\.id).sorted() == [0, 1] else { return false }

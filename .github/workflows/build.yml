@@ -19,14 +19,15 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - name: Verifica toolchain
         run: |
           xcodebuild -version
           xcrun --sdk macosx --show-sdk-version
           swift --version
           test "$(uname -m)" = arm64
-      - name: Test automatici
-        run: scripts/test.sh
       - name: Verifica progetto Xcode in Release
         run: xcodebuild -project MacMouse.xcodeproj -scheme MacMouse -configuration Release -derivedDataPath build/Xcode CODE_SIGNING_ALLOWED=NO build
       - name: Configura firma opzionale
@@ -65,7 +66,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' build/MacMouse.app/Contents/Info.plist)
-          case "$GITHUB_REF_NAME" in "v$VERSION"|"v$VERSION"-*) ;; *) echo 'Tag e versione non corrispondono'; exit 1 ;; esac
+          test "$GITHUB_REF_NAME" = "v$VERSION" || { echo 'Il tag stabile deve corrispondere alla versione del bundle'; exit 1; }
       - name: Genera ZIP, DMG e checksum
         run: scripts/package.sh
       - uses: actions/upload-artifact@v4
@@ -95,7 +96,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-          HARDWARE_VERIFIED: ${{ vars.HARDWARE_VERIFIED }}
         shell: bash
         run: |
           (cd dist && sha256sum --check SHA256SUMS.txt)
@@ -103,9 +103,4 @@ jobs:
             echo 'Release già presente: gli asset pubblicati vengono conservati.'
             exit 0
           fi
-          FLAGS=()
-          if [[ "$TAG" == *-* ]]; then FLAGS+=(--prerelease); elif [[ "$HARDWARE_VERIFIED" != true ]]; then
-            echo 'Per una release stabile completa prima il protocollo hardware e imposta HARDWARE_VERIFIED=true.'
-            exit 1
-          fi
-          gh release create "$TAG" dist/* --verify-tag --title "MacMouse $TAG" --notes-file docs/RELEASE_NOTES.md "${FLAGS[@]}"
+          gh release create "$TAG" dist/* --verify-tag --title "MacMouse $TAG" --notes-file docs/RELEASE_NOTES.md

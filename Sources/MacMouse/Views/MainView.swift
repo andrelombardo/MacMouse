@@ -25,7 +25,6 @@ struct MainView: View {
     @ObservedObject var permissions: PermissionService
     @ObservedObject var login: LoginService
     @ViewState private var editor: EditorSheet?
-    @ViewState private var confirmReset = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -37,15 +36,13 @@ struct MainView: View {
                     Text(deviceSubtitle).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
-                Label(model.isActive ? "Attivo" : "In pausa", systemImage: model.isActive ? "checkmark.circle.fill" : "pause.circle")
-                    .font(.caption).foregroundStyle(model.isActive ? .primary : .secondary)
-                    .padding(.horizontal, 10).padding(.vertical, 7).glassEffect(.regular)
-            }.padding(.bottom, 16)
-
-            Text("Profilo globale · tutti i mouse")
-                .font(.caption).foregroundStyle(.secondary)
-                .help("Quartz non identifica il mouse di origine. Le associazioni valgono per tutti i dispositivi che inviano lo stesso numero di pulsante; clic sinistro e destro non vengono intercettati.")
-                .padding(.bottom, 20)
+                HStack(spacing: 5) {
+                    Circle().fill(model.isActive ? Color.green : Color.secondary)
+                        .frame(width: 6, height: 6).accessibilityHidden(true)
+                    Text(model.isActive ? "Attivo" : "In pausa")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }.padding(.bottom, 20)
 
             VStack(spacing: 16) {
                 ForEach(model.configuration.bindings) { binding in buttonRow(binding) }
@@ -54,73 +51,61 @@ struct MainView: View {
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.separator.opacity(0.45), lineWidth: 0.5))
 
-            Text(model.configuration.bindings.contains { [.desktopLeft, .desktopRight].contains($0.action.kind) }
-                 ? "Per cambiare scrivania servono almeno due spazi in Mission Control."
-                 : "Rileva ciascun pulsante e conferma l’associazione.")
-                .font(.caption).foregroundStyle(.secondary).padding(.top, 10)
-
             Divider().padding(.vertical, 20)
             VStack(alignment: .leading, spacing: 14) {
-                Toggle("Rimappatura attiva", isOn: Binding(get: { model.configuration.enabled }, set: model.setEnabled))
-                    .toggleStyle(.switch).controlSize(.small)
-                Toggle("Avvia al login", isOn: Binding(get: { login.enabled }, set: login.setEnabled))
-                    .toggleStyle(.switch).controlSize(.small)
+                settingRow("MacMouse attivo", isOn: Binding(get: { model.configuration.enabled }, set: model.setEnabled))
+                settingRow("Inverti scorrimento del mouse", isOn: Binding(
+                    get: { model.configuration.reverseMouseScrolling }, set: model.setReverseMouseScrolling))
+                    .help("Solo la rotella. Lascia attivo lo scorrimento naturale in macOS per il trackpad.")
+                settingRow("Avvia al login", isOn: Binding(get: { login.enabled }, set: login.setEnabled))
+                settingRow("Mostra icona nella barra dei menu", isOn: Binding(
+                    get: { model.configuration.showMenuBarIcon }, set: model.setShowMenuBarIcon))
+                    .help("Puoi riaprire MacMouse da Applicazioni anche con l’icona nascosta.")
                 if login.needsApproval {
-                    Button("Approva l’avvio in Impostazioni di Sistema") { login.openSettings() }
-                        .font(.caption)
+                    Button("Approva l’avvio nelle Impostazioni…") { login.openSettings() }
+                        .buttonStyle(.link).font(.caption)
                 }
             }
+            .toggleStyle(.switch).controlSize(.small)
 
-            if !permissions.ready {
-                VStack(alignment: .leading, spacing: 9) {
-                    Label(permissions.title, systemImage: "hand.raised").font(.callout.weight(.medium))
-                    Text(permissions.explanation)
-                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    HStack {
-                        Button(permissions.accessibility ? "Consenti invio" : "Apri Impostazioni") { permissions.request() }.buttonStyle(.glass)
-                        Button("Verifica") { model.refresh(retry: true) }
-                        Button("Mostra app") { permissions.revealApplication() }
-                    }.controlSize(.small)
-                }.padding(.top, 20)
-            } else if model.status == .unavailable || model.status == .suspended {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("\(model.status.title). Ricontrolla i permessi o riavvia MacMouse.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    HStack {
-                        Button("Riprova") { model.refresh(retry: true) }
-                        if model.status == .unavailable && !CGPreflightListenEventAccess() {
-                            Button("Consenti Monitoraggio input") {
-                                _ = CGRequestListenEventAccess()
-                                model.refresh(retry: true)
-                            }
-                        }
-                    }.controlSize(.small)
-                }.padding(.top, 16)
+            Group {
+                if permissions.ready {
+                    Text("Accessibilità consentita").foregroundStyle(.secondary)
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
+                        Button("Apri le impostazioni") { permissions.request() }
+                            .buttonStyle(.link)
+                        Text("per abilitare le accessibilità").foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .font(.caption).padding(.top, 20)
+
+            if model.status == .unavailable || model.status == .suspended {
+                HStack {
+                    Text(model.status.title).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Riprova") { model.refresh(retry: true) }.buttonStyle(.link)
+                }.font(.caption).padding(.top, 10)
+                if model.status == .unavailable && !CGPreflightListenEventAccess() {
+                    Button("Consenti Monitoraggio input…") {
+                        _ = CGRequestListenEventAccess()
+                        model.refresh(retry: true)
+                    }.buttonStyle(.link).font(.caption).padding(.top, 8)
+                }
             }
 
             if let message = model.message ?? login.error {
                 HStack(alignment: .top, spacing: 8) {
                     Text(message).font(.caption).fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
-                    Button { model.message = nil; login.error = nil } label: { Image(systemName: "xmark") }
+                    Button {
+                        model.message = nil
+                        login.error = nil
+                    } label: { Image(systemName: "xmark") }
                         .buttonStyle(.plain).accessibilityLabel("Chiudi messaggio")
                 }.padding(.top, 14)
             }
-
-            HStack {
-                Text(model.statusText).font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Menu {
-                    Button(model.diagnosticsVisible ? "Nascondi diagnostica" : "Mostra diagnostica") { model.diagnosticsVisible.toggle() }
-                    Button("Autorizzazioni…") { permissions.openSettings() }
-                    Divider()
-                    Button("Ripristina impostazioni…", role: .destructive) { confirmReset = true }
-                } label: { Image(systemName: "gearshape") }
-                    .menuStyle(.borderlessButton).fixedSize().help("Preferenze e diagnostica")
-                    .accessibilityLabel("Preferenze e diagnostica")
-            }.padding(.top, 22)
-
-            if model.diagnosticsVisible { diagnostics.padding(.top, 14) }
         }
         .padding(24)
         .frame(width: 460)
@@ -135,12 +120,6 @@ struct MainView: View {
                 ButtonDetectionSheet(bindingID: id, model: model, permissions: permissions)
             }
         }
-        .alert("Ripristinare MacMouse?", isPresented: $confirmReset) {
-            Button("Annulla", role: .cancel) {}
-            Button("Ripristina", role: .destructive) { model.reset() }
-        } message: {
-            Text("Verranno rimosse le associazioni e le scorciatoie. L’avvio al login verrà disattivato.")
-        }
     }
 
     private var deviceTitle: String {
@@ -148,21 +127,25 @@ struct MainView: View {
         return devices.devices.first?.name ?? "Il tuo mouse"
     }
     private var deviceSubtitle: String {
-        if let device = devices.devices.first {
-            return devices.devices.count == 1 ? "Collegato · \(device.transport)" : devices.devices.map(\.name).joined(separator: ", ")
+        if devices.devices.isEmpty { return "Nessun mouse esterno rilevato" }
+        if devices.devices.count == 1 { return "Collegato" }
+        return devices.devices.map(\.name).joined(separator: ", ")
+    }
+
+    private func settingRow(_ title: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 12) {
+            Text(title).accessibilityHidden(true)
+            Spacer(minLength: 0)
+            Toggle(title, isOn: isOn).labelsHidden().fixedSize()
         }
-        return "Nessun mouse esterno rilevato"
     }
 
     private func buttonRow(_ binding: ButtonBinding) -> some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Pulsante laterale \(binding.id + 1)").font(.system(size: 13, weight: .medium))
-                Button(binding.buttonNumber.map { "Pulsante \($0) · Rileva…" } ?? "Rileva pulsante…") {
-                    editor = .detection(binding.id)
-                }
-                .buttonStyle(.link).font(.caption)
-                .accessibilityLabel("Rileva pulsante laterale \(binding.id + 1)")
+                Text(binding.buttonNumber.map { "Pulsante \($0)" } ?? "Non associato")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
             Menu {
@@ -191,9 +174,9 @@ struct MainView: View {
                     }
                 }
             } label: { Image(systemName: "ellipsis") }
-                .menuStyle(.borderlessButton).fixedSize()
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                 .accessibilityLabel("Opzioni del pulsante laterale \(binding.id + 1)")
-                .help("Rileva pulsante e altre opzioni")
+                .help("Opzioni del pulsante")
         }
     }
 
@@ -233,29 +216,4 @@ struct MainView: View {
         } else { model.setAction(.init(kind), id: binding.id) }
     }
 
-    private var diagnostics: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Diagnostica").font(.caption.weight(.semibold))
-            Text(model.lastDiagnostic.map { "Pulsante \($0.button) · \($0.event)" } ?? "Premi un pulsante aggiuntivo del mouse.")
-                .font(.system(.caption, design: .monospaced))
-            if let shortcut = model.lastShortcut {
-                Text("Combinazione inviata: \(shortcut.display)").font(.system(.caption, design: .monospaced))
-            }
-            HStack {
-                Button("Prova pulsante 1") { model.testAction(id: 0) }
-                Button("Prova pulsante 2") { model.testAction(id: 1) }
-            }.controlSize(.small)
-            Text("Cambi scrivania osservati: \(model.spaceChanges)").font(.caption)
-            ForEach(devices.devices) { device in
-                Text(String(format: "%@ · VID %04X · PID %04X", device.name, device.vendorID, device.productID)).font(.caption)
-            }
-            Text("Solo l’ultimo evento mouse, in memoria. Nessuna provenienza HID attribuita. Le azioni macOS richiedono scorciatoie di sistema abilitate; puoi personalizzarle dal menu del pulsante.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Text("Controllo del dispositivo: \(permissions.accessibility ? "consentito" : "non riconosciuto") · Invio eventi: \(permissions.posting ? "consentito" : "non riconosciuto")")
-                .font(.caption).foregroundStyle(.secondary)
-            Text(Bundle.main.bundleURL.path).font(.caption2).foregroundStyle(.secondary)
-            Text("MacMouse \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") · Beta · profilo globale")
-                .font(.caption2).foregroundStyle(.secondary)
-        }.textSelection(.enabled)
-    }
 }

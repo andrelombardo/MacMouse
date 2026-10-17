@@ -4,9 +4,6 @@ import IOKit.hid
 struct MouseDevice: Identifiable, Equatable, Sendable {
     let id: UInt64
     let name: String
-    let transport: String
-    let vendorID: Int
-    let productID: Int
 }
 
 @MainActor
@@ -60,10 +57,7 @@ final class DeviceService: ObservableObject {
         let name = property(kIOHIDProductKey) as? String ?? "Mouse esterno"
         let builtIn = (property("Built-In") as? NSNumber)?.boolValue ?? false
         guard !builtIn, !name.localizedCaseInsensitiveContains("trackpad") else { return }
-        let mouse = MouseDevice(id: identifier(device), name: name,
-                                transport: property(kIOHIDTransportKey) as? String ?? "Collegamento non indicato",
-                                vendorID: (property(kIOHIDVendorIDKey) as? NSNumber)?.intValue ?? 0,
-                                productID: (property(kIOHIDProductIDKey) as? NSNumber)?.intValue ?? 0)
+        let mouse = MouseDevice(id: identifier(device), name: name)
         devices.removeAll { $0.id == mouse.id }
         devices.append(mouse)
         devices.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }

@@ -30,7 +30,6 @@ enum KeyboardLayout {
 @MainActor
 final class ActionExecutor {
     var onError: ((String) -> Void)?
-    var onShortcut: ((Shortcut) -> Void)?
     private let navigationQueue = DispatchQueue(label: "MacMouse.Navigation", qos: .userInteractive)
     private let keyboardQueue = DispatchQueue(label: "MacMouse.Keyboard", qos: .userInteractive)
     private let cancellation = ActionCancellation()
@@ -117,7 +116,6 @@ final class ActionExecutor {
                 event.post(tap: .cgSessionEventTap)
                 if index + 1 < events.count { Thread.sleep(forTimeInterval: 0.03) }
             }
-            Task { @MainActor [weak self] in self?.onShortcut?(shortcut) }
         }
     }
 }

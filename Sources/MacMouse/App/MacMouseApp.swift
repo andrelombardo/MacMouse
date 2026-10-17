@@ -16,10 +16,11 @@ enum MacMouseApp {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let model = AppModel()
     private var window: NSWindow?
     private var statusItem: NSStatusItem?
+    private var menuVisibility: AnyCancellable?
     private var workspaceObservers: [NSObjectProtocol] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -32,14 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             return
         }
         makeApplicationMenu()
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "computermouse", accessibilityDescription: "MacMouse")
-        item.button?.image?.isTemplate = true
-        item.button?.toolTip = "MacMouse"
-        let menu = NSMenu()
-        menu.delegate = self
-        item.menu = menu
-        statusItem = item
+        menuVisibility = model.$configuration
+            .map(\.showMenuBarIcon)
+            .removeDuplicates()
+            .sink { [weak self] visible in self?.setMenuBarIconVisible(visible) }
         model.start()
         let center = NSWorkspace.shared.notificationCenter
         workspaceObservers.append(center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
@@ -54,14 +51,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         workspaceObservers.append(center.addObserver(forName: NSWorkspace.sessionDidBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.model.wake() }
         })
-        workspaceObservers.append(center.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.model.spaceDidChange() }
-        })
         let event = NSAppleEventManager.shared().currentAppleEvent
         let loginLaunch = event?.eventID == kAEOpenApplication
             && event?.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
         if !loginLaunch && !ProcessInfo.processInfo.arguments.contains("--background") { showWindow() }
-        runSmokeCaptureIfRequested()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -70,7 +63,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
     func applicationDidBecomeActive(_ notification: Notification) {
         model.refresh()
-        if window?.isVisible == true { model.windowVisible(true) }
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationWillTerminate(_ notification: Notification) {
@@ -105,21 +97,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func windowDidMiniaturize(_ notification: Notification) { model.windowVisible(false) }
     func windowDidDeminiaturize(_ notification: Notification) { model.windowVisible(true) }
 
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        model.refresh()
-        menu.removeAllItems()
+    private func setMenuBarIconVisible(_ visible: Bool) {
+        guard visible else {
+            if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
+            statusItem = nil
+            return
+        }
+        guard statusItem == nil else { return }
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.button?.image = NSImage(systemSymbolName: "computermouse", accessibilityDescription: "MacMouse")
+        item.button?.image?.isTemplate = true
+        item.button?.toolTip = "MacMouse"
+        let menu = NSMenu()
         menu.addItem(withTitle: "Apri MacMouse", action: #selector(showWindow), keyEquivalent: "")
-        let active = menu.addItem(withTitle: model.configuration.enabled ? "Disattiva MacMouse" : "Attiva MacMouse",
-                                  action: #selector(toggleEnabled), keyEquivalent: "")
-        active.state = model.configuration.enabled ? .on : .off
-        let login = menu.addItem(withTitle: "Avvia al login", action: #selector(toggleLogin), keyEquivalent: "")
-        login.state = model.login.enabled ? .on : .off
-        menu.addItem(.separator())
         menu.addItem(withTitle: "Esci da MacMouse", action: #selector(quit), keyEquivalent: "q")
-        for item in menu.items { item.target = self }
+        for entry in menu.items { entry.target = self }
+        item.menu = menu
+        statusItem = item
     }
-    @objc private func toggleEnabled() { model.setEnabled(!model.configuration.enabled) }
-    @objc private func toggleLogin() { model.login.setEnabled(!model.login.enabled) }
     @objc private func quit() { NSApp.terminate(nil) }
 
     private func makeApplicationMenu() {
@@ -152,26 +147,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         NSApp.mainMenu = main
     }
 
-    /// Captures the actual rendered content view without screen recording or synthetic UI.
-    private func runSmokeCaptureIfRequested() {
-        let args = ProcessInfo.processInfo.arguments
-        guard let index = args.firstIndex(of: "--smoke-capture"), args.count > index + 1 else { return }
-        let path = args[index + 1]
-        if args.contains("--dark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
-        if args.contains("--light") { NSApp.appearance = NSAppearance(named: .aqua) }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [self] in
-            guard let view = window?.contentView,
-                  let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
-            view.cacheDisplay(in: view.bounds, to: bitmap)
-            if let png = bitmap.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: path)) }
-            let report: [String: Any] = ["version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
-                "bundlePath": Bundle.main.bundleURL.path, "system": ProcessInfo.processInfo.operatingSystemVersionString,
-                "accessibility": model.permissions.accessibility, "posting": model.permissions.posting,
-                "engine": model.status.title, "windowVisible": window?.isVisible == true,
-                "mouseNames": model.devices.devices.map(\.name), "physicalHardwareTested": false]
-            if let json = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
-                try? json.write(to: URL(fileURLWithPath: path + ".json"))
-            }
-        }
-    }
 }

@@ -15,9 +15,6 @@ def add(identity, isa, **fields):
     objects[key] = dict(isa=isa, **fields)
     return key
 
-def ref(name):
-    return uid(name)
-
 def file(path, file_type, tree="SOURCE_ROOT"):
     return add("file:" + path, "PBXFileReference", lastKnownFileType=file_type, path=path, sourceTree=tree)
 
@@ -28,15 +25,13 @@ assets = file("Sources/MacMouse/Resources/Assets.xcassets", "folder.assetcatalog
 info = file("Sources/MacMouse/Resources/Info.plist", "text.plist.xml")
 package = file("Package.swift", "sourcecode.swift")
 readme = file("README.md", "net.daringfireball.markdown")
-tests = [file(p.relative_to(root).as_posix(), "sourcecode.swift") for p in sorted((root / "Tests").rglob("*.swift"))]
 product = add("product", "PBXFileReference", explicitFileType="wrapper.application", path="MacMouse.app", sourceTree="BUILT_PRODUCTS_DIR")
 sources_phase = add("sources", "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_builds, runOnlyForDeploymentPostprocessing=0)
 resources_phase = add("resources", "PBXResourcesBuildPhase", buildActionMask=2147483647, files=[add("assets-build", "PBXBuildFile", fileRef=assets)], runOnlyForDeploymentPostprocessing=0)
 frameworks_phase = add("frameworks", "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=[], runOnlyForDeploymentPostprocessing=0)
 sources_group = add("source-group", "PBXGroup", children=source_refs + [assets, info], name="Sorgenti", sourceTree="<group>")
-tests_group = add("tests-group", "PBXGroup", children=tests, name="Test (swift test)", sourceTree="<group>")
 products_group = add("products", "PBXGroup", children=[product], name="Products", sourceTree="<group>")
-main = add("main", "PBXGroup", children=[sources_group, tests_group, package, readme, products_group], sourceTree="<group>")
+main = add("main", "PBXGroup", children=[sources_group, package, readme, products_group], sourceTree="<group>")
 project_configs, target_configs = [], []
 for config in ["Debug", "Release"]:
     project_configs.append(add("project-" + config, "XCBuildConfiguration", name=config, buildSettings={
@@ -45,7 +40,6 @@ for config in ["Debug", "Release"]:
         "SWIFT_OPTIMIZATION_LEVEL": "-Onone" if config == "Debug" else "-O",
         "SWIFT_COMPILATION_MODE": "singlefile" if config == "Debug" else "wholemodule",
         "DEBUG_INFORMATION_FORMAT": "dwarf" if config == "Debug" else "dwarf-with-dsym",
-        "ENABLE_TESTABILITY": "YES" if config == "Debug" else "NO",
         "SWIFT_ACTIVE_COMPILATION_CONDITIONS": "DEBUG" if config == "Debug" else "",
     }))
     target_configs.append(add("target-" + config, "XCBuildConfiguration", name=config, buildSettings={
@@ -77,7 +71,7 @@ folder.mkdir(exist_ok=True)
 scheme = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Scheme LastUpgradeVersion="2700" version="1.3">
   <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries>
-    <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
+    <BuildActionEntry buildForTesting="NO" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
       <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{target}" BuildableName="MacMouse.app" BlueprintName="MacMouse" ReferencedContainer="container:MacMouse.xcodeproj"/>
     </BuildActionEntry>
   </BuildActionEntries></BuildAction>

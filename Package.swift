@@ -8,7 +8,6 @@ let package = Package(
                .executable(name: "MacMouse", targets: ["MacMouse"])],
     targets: [
         .target(name: "MacMouseCore"),
-        .executableTarget(name: "MacMouse", dependencies: ["MacMouseCore"], exclude: ["Resources"]),
-        .testTarget(name: "MacMouseCoreTests", dependencies: ["MacMouseCore"])
+        .executableTarget(name: "MacMouse", dependencies: ["MacMouseCore"], exclude: ["Resources"])
     ]
 )

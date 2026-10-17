@@ -16,11 +16,17 @@ if [[ -n "${NOTARY_KEYCHAIN_PROFILE:-}" ]]; then
   rm dist/notarization.zip
 fi
 ditto -c -k --sequesterRsrc --keepParent "$APP" "dist/$BASE.zip"
-STAGING="$(mktemp -d "${TMPDIR:-/tmp}/MacMouse.dmg.XXXXXX")"
-trap 'rm -rf "$STAGING"' EXIT
-ditto "$APP" "$STAGING/MacMouse.app"
-ln -s /Applications "$STAGING/Applications"
-hdiutil create -volname MacMouse -srcfolder "$STAGING" -ov -format UDZO "dist/$BASE.dmg"
+if [[ ! -x .build/packaging/bin/python ]]; then
+  if ! "${PYTHON:-python3}" -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
+    echo 'Il packaging richiede Python 3.10+. Specifica PYTHON=/percorso/python3.' >&2
+    exit 1
+  fi
+  "${PYTHON:-python3}" -m venv .build/packaging
+fi
+.build/packaging/bin/python -m pip install --disable-pip-version-check -q -r scripts/requirements-packaging.txt
+swift scripts/dmg-background.swift build/dmg-background.png
+.build/packaging/bin/python -m dmgbuild -s scripts/dmg-settings.py MacMouse "dist/$BASE.dmg"
+hdiutil verify "dist/$BASE.dmg"
 if [[ -n "${NOTARY_KEYCHAIN_PROFILE:-}" ]]; then
   codesign --timestamp --sign "$SIGN_IDENTITY" "dist/$BASE.dmg"
   xcrun notarytool submit "dist/$BASE.dmg" --keychain-profile "$NOTARY_KEYCHAIN_PROFILE" --wait
